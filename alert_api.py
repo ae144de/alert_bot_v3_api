@@ -10,9 +10,9 @@ import uuid
 
 
 app = Flask(__name__)
-
+FIREBASE_CREDENTIAL = "/opt/secrets/alert_bot_v3_api_firebase.json"
 # Initialize the firebase admin.
-cred = credentials.Certificate("lambdacryptobotproject-firebase-adminsdk.json")
+cred = credentials.Certificate(FIREBASE_CREDENTIAL)
 firebase_admin.initialize_app(cred, {
     'databaseURL': 'https://lambdacryptobotproject.firebaseio.com/'
 })
