@@ -157,6 +157,10 @@ async def subscribe_existing_symbols():
 # REST API Endpoints
 # --------------------
 
+@app.route('/api')
+def hello_server():
+    return "Hello_World!!!"
+
 @app.route('/api/alerts', methods=['POST'])
 def create_alert():
     data = request.get_json()
