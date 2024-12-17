@@ -7,9 +7,11 @@ from firebase_admin import credentials, db
 import websockets
 from datetime import datetime
 import uuid
+from flask_cors import CORS
 
 
 app = Flask(__name__)
+CORS(app, resources={r"/*":{"origins": "https://alert-bot-v3.vercel.app"}})
 FIREBASE_CREDENTIAL = "/opt/secrets/alert_bot_v3_api_firebase.json"
 # Initialize the firebase admin.
 cred = credentials.Certificate(FIREBASE_CREDENTIAL)
@@ -25,29 +27,52 @@ subscriptions = set()
 ws_connection = None
 
 async def websocket_handler():
-    
     global subscriptions, ws_connection
-    
     #Establish single base connection.
     async with websockets.connect(WS_URL) as ws:
         ws_connection = ws
         print("Websocket base connection established.")
-        
         # After connection, subscribe to all symbols from existing alerts.
         await subscribe_existing_symbols()
-        
         #Keep listening for incoming messages.
         async for message in ws:
             data = json.loads(message)
-            print(f"[**]- Message: {data}")
-            print(f"[##SUBSCRIPTIONS]: {subscriptions}")
+            # print(f"[**Message]: {data["s"]}")
+            # print(f"[##SUBSCRIPTIONS]: {subscriptions}")
             event_type = data.get("e")
             if event_type == "kline":
                 symbol = data["s"]
                 close_price = float(data["k"]["c"])
-                
+                print(f"{symbol} ---- {close_price}")
+                #print(f"{symbol} -- {close_price}")
                 # Update all alerts for this symbol with close_price
                 await update_and_check_alerts(symbol, close_price)
+
+
+# async def websocket_handler():
+    
+#     global subscriptions, ws_connection
+    
+#     #Establish single base connection.
+#     async with websockets.connect(WS_URL) as ws:
+#         ws_connection = ws
+#         print("Websocket base connection established.")
+        
+#         # After connection, subscribe to all symbols from existing alerts.
+#         await subscribe_existing_symbols()
+        
+#         #Keep listening for incoming messages.
+#         async for message in ws:
+#             data = json.loads(message)
+#             print(f"[**]- Message: {data}")
+#             print(f"[##SUBSCRIPTIONS]: {subscriptions}")
+#             event_type = data.get("e")
+#             if event_type == "kline":
+#                 symbol = data["s"]
+#                 close_price = float(data["k"]["c"])
+                
+#                 # Update all alerts for this symbol with close_price
+#                 await update_and_check_alerts(symbol, close_price)
 
 async def update_and_check_alerts(symbol, close_price):
     
