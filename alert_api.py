@@ -8,7 +8,8 @@ import websockets
 from datetime import datetime
 import uuid
 from flask_cors import CORS
-
+from auth import token_required
+from dotenv import load_dotenv
 
 app = Flask(__name__)
 CORS(app, resources={r"/*":{"origins": "https://alert-bot-v3.vercel.app"}})
@@ -20,6 +21,8 @@ firebase_admin.initialize_app(cred, {
 })
 
 alerts_ref = db.reference('alerts');
+# Load NEXTAUTH_SECRET from environment variables
+NEXTAUTH_SECRET = os.getenv('NEXTAUTH_SECRET')
 
 async_loop = None
 WS_URL = "wss://fstream.binance.com/ws"
@@ -182,12 +185,30 @@ async def subscribe_existing_symbols():
 # REST API Endpoints
 # --------------------
 
+@app.route('/api/users/updatePhoneNumber', methods=['POST'])
+@token_required
+def update_phone_number(current_user_email):
+    data = request.get_json()
+    phone_number = data.get('phoneNumber')
+    
+    if not phone_number:
+        return jsonify({'message': 'Phone number is required.'}), 400
+    
+    try:
+        user_key = current_user_email.replace('.', '%2E')  # Encode email for Firebase key
+        user_ref = db.reference(f'users/{user_key}')
+        user_ref.update({'phoneNumber': phone_number})
+        return jsonify({'message': 'Phone number updated successfully.'}), 200
+    except Exception as e:
+        return jsonify({'message': f'An error occurred: {str(e)}'}), 500
+
 @app.route('/api')
 def hello_server():
     return "Hello_World!!!"
 
 @app.route('/api/alerts', methods=['POST'])
-def create_alert():
+@token_required
+def create_alert(current_user_email):
     data = request.get_json()
     print(data)
     symbol = data.get('selectedSymbol')
@@ -206,26 +227,41 @@ def create_alert():
     #     'operator': operator,
     #     'value': float(value)
     # })
-    
-    current_date = datetime.now()
-    formatted_current_date = current_date.strftime("%d%m%Y%H%M%S")
-    alert_id = symbol+"_tickerAlert"+"_"+formatted_current_date
-    
-    # Now we use child(<id>) + set() to specify the id. Because push() method generates the id by itself.
-    new_alert_ref = alerts_ref.child(alert_id).set({
-        'symbol': symbol.upper(),
-        'operator': operator,
-        'value': float(value),
-        'type': type,
-        'created_at': created_at,
-        'status': status,
-    })
-    
-    #Schedule a subscription task.
-    asyncio.run_coroutine_threadsafe(subscribe_symbol(symbol, alert_id), async_loop)
-    
-    return jsonify({'status': 'created', 'id': alert_id}), 201
 
+    try:
+        user_key = current_user_email.replace('.', '%2E') # Encode email for Firebase key.
+        alerts_ref = db.reference(f'reference/{user_key}')
+    
+        current_date = datetime.now()
+        formatted_current_date = current_date.strftime("%d%m%Y%H%M%S")
+        alert_id = symbol+"_tickerAlert"+"_"+formatted_current_date
+    
+        # Now we use child(<id>) + set() to specify the id. Because push() method generates the id by itself.
+        # new_alert_ref = alerts_ref.child(alert_id).set({
+        #     'symbol': symbol.upper(),
+        #     'operator': operator,
+        #     'value': float(value),
+        #     'type': type,
+        #     'created_at': created_at,
+        #     'status': status,
+        #     'userEmail': current_user_email,
+        # })
+        new_alert_ref = {
+            'symbol': symbol.upper(),
+            'operator': operator,
+            'value': float(value),
+            'type': type,
+            'created_at': created_at,
+            'status': status,
+            'userEmail': current_user_email,
+        }
+        alerts_ref.push(new_alert_ref)
+        #Schedule a subscription task.
+        asyncio.run_coroutine_threadsafe(subscribe_symbol(symbol, alert_id), async_loop)
+        
+        return jsonify({'status': 'created', 'id': alert_id}), 201
+    except Exception as e:
+        return jsonify({'message' : f'An error occured: {str(e)}'}), 500
 @app.route('/api/alerts', methods=['GET'])
 def get_alerts():
     snapshot = alerts_ref.get() or {}
