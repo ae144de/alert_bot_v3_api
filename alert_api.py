@@ -10,6 +10,7 @@ import uuid
 from flask_cors import CORS
 from auth import token_required
 from dotenv import load_dotenv
+import os
 
 app = Flask(__name__)
 CORS(app, resources={r"/*":{"origins": "https://alert-bot-v3.vercel.app"}})
@@ -22,7 +23,7 @@ firebase_admin.initialize_app(cred, {
 
 alerts_ref = db.reference('alerts');
 # Load NEXTAUTH_SECRET from environment variables
-NEXTAUTH_SECRET = os.getenv('NEXTAUTH_SECRET')
+# NEXTAUTH_SECRET = os.getenv('NEXTAUTH_SECRET')
 
 async_loop = None
 WS_URL = "wss://fstream.binance.com/ws"
