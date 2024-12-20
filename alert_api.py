@@ -8,9 +8,11 @@ import websockets
 from datetime import datetime
 import uuid
 from flask_cors import CORS
-from auth import token_required
+# from auth import token_required
 from dotenv import load_dotenv
 import os
+
+load_dotenv()
 
 app = Flask(__name__)
 CORS(app, resources={r"/*":{"origins": "https://alert-bot-v3.vercel.app"}})
@@ -20,6 +22,39 @@ cred = credentials.Certificate(FIREBASE_CREDENTIAL)
 firebase_admin.initialize_app(cred, {
     'databaseURL': 'https://lambdacryptobotproject.firebaseio.com/'
 })
+
+NEXTAUTH_SECRET = os.getenv('NEXTAUTH_SECRET')
+
+if not NEXTAUTH_SECRET:
+    raise ValueError("Missing NEXTAUTH_SECRET environment variable.")
+
+
+# JWT Verification Decorator
+def token_required(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        token = None
+        # JWT is passed in the request header
+        if 'Authorization' in request.headers:
+            bearer = request.headers['Authorization']
+            if bearer and bearer.startswith('Bearer '):
+                token = bearer.split(' ')[1]
+
+        if not token:
+            return jsonify({'message': 'Token is missing!'}), 401
+
+        try:
+            # Decode the token using NEXTAUTH_SECRET
+            data = jwt.decode(token, NEXTAUTH_SECRET, algorithms=["HS256"])
+            current_user_email = data['email']
+        except jwt.ExpiredSignatureError:
+            return jsonify({'message': 'Token has expired!'}), 401
+        except jwt.InvalidTokenError:
+            return jsonify({'message': 'Invalid token!'}), 401
+
+        return f(current_user_email, *args, **kwargs)
+
+    return decorated
 
 alerts_ref = db.reference('alerts');
 # Load NEXTAUTH_SECRET from environment variables
