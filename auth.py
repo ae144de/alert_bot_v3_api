@@ -14,7 +14,7 @@ def token_required(f):
         # JWT is passed in the request header
         if 'Authorization' in request.headers:
             bearer = request.headers['Authorization']
-            if bearer and bearer.startswith('Bearer ')
+            if bearer and bearer.startswith('Bearer '):
                 token = bearer.split(' ')[1] 
 
         if not token:
