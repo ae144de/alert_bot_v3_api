@@ -12,6 +12,7 @@ from flask_cors import CORS
 from dotenv import load_dotenv
 import os
 from functools import wraps
+import jwt
 
 
 load_dotenv()
