@@ -180,7 +180,7 @@ async def subscribe_existing_symbols():
     
     # Subscribe to each symbol.
     for sym in symbols_to_subscribe:
-        await subscribe_symbol(sym[0], sym[1]);
+        await subscribe_symbol(sym[0], sym[1])
 # --------------------
 # REST API Endpoints
 # --------------------
