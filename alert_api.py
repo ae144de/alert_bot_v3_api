@@ -58,8 +58,10 @@ def token_required(f):
 
         try:
             # Decode the token using NEXTAUTH_SECRET
+            print(f"**TOKEN: {token}")
             data = jwt.decode(token, NEXTAUTH_SECRET, algorithms=["HS256"])
-            current_user_email = data['email']
+            # current_user_email = data['email']
+            print(f"**DATA: {data}")
         except jwt.ExpiredSignatureError:
             return jsonify({'message': 'Token has expired!'}), 401
         except jwt.InvalidTokenError:
