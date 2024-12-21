@@ -35,6 +35,7 @@ firebase_admin.initialize_app(cred, {
 })
 
 NEXTAUTH_SECRET = os.getenv('NEXTAUTH_SECRET')
+print(f'NEXTAUTH_SECRET: {NEXTAUTH_SECRET}')
 
 if not NEXTAUTH_SECRET:
     raise ValueError("Missing NEXTAUTH_SECRET environment variable.")
