@@ -260,18 +260,20 @@ def hello_server():
 def get_user_data(current_user_email):
     # Retrieves the user's data (including the phone number) based on their email.
     try:
-        user_key = current_user_email.replace('.', '%2E')
-        user_key = db.reference(f'users/{user_key}')
-        user_data = user_ref.get()
+        # user_key = current_user_email.replace('.', '%2E')
+        # user_key = db.reference(f'users/{user_key}')
+        # user_data = user_ref.get()
 
-        if not user_data:
-            return jsonify({'message': 'No data found for this user.'}), 404
+        # if not user_data:
+        #     return jsonify({'message': 'No data found for this user.'}), 404
 
-        return jsonify({
-            'email': current_user_email,
-            'phoneNumber': user_data.get('phoneNumber', ''),
-            'name': user_data.get('name', '')
-        })
+        # return jsonify({
+        #     'email': current_user_email,
+        #     'phoneNumber': user_data.get('phoneNumber', ''),
+        #     'name': user_data.get('name', '')
+        # })
+        print(f"CURRENT USER: {current_user_email}")
+        print("GET USER DATA WORKED !!!")
 
     except Exception as e:
         return jsonify({'message': f'Error retrieving user data: {str(e)}'}), 500
