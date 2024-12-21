@@ -18,7 +18,15 @@ import jwt
 load_dotenv()
 
 app = Flask(__name__)
-CORS(app, resources={r"/*":{"origins": "https://alert-bot-v3.vercel.app"}})
+# CORS(app, resources={r"/*":{"origins": "https://alert-bot-v3.vercel.app"}})
+CORS(app, resources={
+    r"/api/*": {
+        "origins": "https://alert-bot-v3.vercel.app",
+        "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+        "allow_headers": ["Content-Type", "Authorization"],
+        "supports_credentials": True,
+    }
+})
 FIREBASE_CREDENTIAL = "/opt/secrets/alert_bot_v3_api_firebase.json"
 # Initialize the firebase admin.
 cred = credentials.Certificate(FIREBASE_CREDENTIAL)
@@ -246,6 +254,27 @@ def update_phone_number(current_user_email):
 def hello_server():
     return "Hello_World!!!"
 
+@app.route('/api/users/getUserData', method=['GET'])
+@token_required
+def get_user_data(current_user_emaail):
+    # Retrieves the user's data (including the phone number) based on their email.
+    try:
+        user_key = current_user_email.replace('.', '%2E')
+        user_key = db.reference(f'users/{user_key}')
+        user_data = user_ref.get()
+
+        if not user_data:
+            return jsonify({'message': 'No data found for this user.'}), 404
+
+        return jsonify({
+            'email': current_user_email,
+            'phoneNumber': user_data.get('phoneNumber', ''),
+            'name': user_data.get('name', '')
+        })
+
+    except Exception as e:
+        return jsonify({'message': f'Error retrieving user data: {str(e)}'}), 500
+
 @app.route('/api/alerts', methods=['POST'])
 @token_required
 def create_alert(current_user_email):
@@ -302,6 +331,7 @@ def create_alert(current_user_email):
         return jsonify({'status': 'created', 'id': alert_id}), 201
     except Exception as e:
         return jsonify({'message' : f'An error occured: {str(e)}'}), 500
+
 @app.route('/api/alerts', methods=['GET'])
 def get_alerts():
     snapshot = alerts_ref.get() or {}
