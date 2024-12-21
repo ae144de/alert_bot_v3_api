@@ -259,7 +259,7 @@ def hello_server():
 
 @app.route('/api/users/getUserData', methods=['GET'])
 @token_required
-def get_user_data(current_user_email):
+def get_user_data():
     # Retrieves the user's data (including the phone number) based on their email.
     try:
         # user_key = current_user_email.replace('.', '%2E')
