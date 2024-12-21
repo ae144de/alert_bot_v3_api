@@ -47,7 +47,7 @@ def token_required(f):
     def decorated(*args, **kwargs):
         token = None
         # JWT is passed in the request header
-        print(f"[**REQUEST]: {request}")
+        print(f"[**REQUEST]: {request.headers}")
         if 'Authorization' in request.headers:
             bearer = request.headers['Authorization']
             if bearer and bearer.startswith('Bearer '):
