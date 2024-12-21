@@ -254,7 +254,7 @@ def update_phone_number(current_user_email):
 def hello_server():
     return "Hello_World!!!"
 
-@app.route('/api/users/getUserData', method=['GET'])
+@app.route('/api/users/getUserData', methods=['GET'])
 @token_required
 def get_user_data(current_user_emaail):
     # Retrieves the user's data (including the phone number) based on their email.
