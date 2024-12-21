@@ -48,10 +48,13 @@ def token_required(f):
         token = None
         # JWT is passed in the request header
         print(f"[**REQUEST]: {request.headers}")
+        print(f"REQUEST_TYPE: {str(type(request.headers))}")
         if 'Authorization' in request.headers:
             bearer = request.headers['Authorization']
+            print(f"Bearer: {bearer}")
             if bearer and bearer.startswith('Bearer '):
                 token = bearer.split(' ')[1]
+                print(f"**TOKEN: {token}")
 
         if not token:
             return jsonify({'message': 'Token is missing!'}), 401
