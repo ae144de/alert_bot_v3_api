@@ -278,7 +278,7 @@ def get_user_data():
         #     'phoneNumber': user_data.get('phoneNumber', ''),
         #     'name': user_data.get('name', '')
         # })
-        print(f"CURRENT USER: {current_user_email}")
+        print(f"CURRENT USER:")
         print("GET USER DATA WORKED !!!")
 
     except Exception as e:
