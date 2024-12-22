@@ -53,6 +53,7 @@ def token_required(f):
             bearer = request.headers['Authorization']
             print(f"Bearer: {bearer}")
             if bearer and bearer.startswith('Bearer '):
+                print("There is a Bearer and starts with Bearer !!!")
                 token = bearer.split(' ')[1]
                 print(f"**TOKEN: {token}")
 
