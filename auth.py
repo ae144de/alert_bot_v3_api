@@ -7,7 +7,7 @@ import firebase_admin
 from firebase_admin import credentials, db
 
 
-def token_required(f):
+def token_required(f): 
     @wraps(f)
     def decorated(*args, **kwargs):
         token = None
