@@ -280,6 +280,7 @@ def get_user_data():
         # })
         print(f"CURRENT USER:")
         print("GET USER DATA WORKED !!!")
+        return jsonify({'message': '***GET_USER_DATA***'})
 
     except Exception as e:
         return jsonify({'message': f'Error retrieving user data: {str(e)}'}), 500
