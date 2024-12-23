@@ -37,11 +37,11 @@ firebase_admin.initialize_app(cred, {
 
 NEXTAUTH_SECRET = os.getenv('NEXTAUTH_SECRET')
 print(f'NEXTAUTH_SECRET: {NEXTAUTH_SECRET}')
-app.config['JWT_SECRET_KEY'] = NEXTAUTH_SECRET
+
 if not NEXTAUTH_SECRET:
     raise ValueError("Missing NEXTAUTH_SECRET environment variable.")
 
-jwt_ = JWTManager(app)
+
 
 # JWT Verification Decorator
 def token_required(f):
@@ -134,19 +134,34 @@ async def websocket_handler():
 #                 # Update all alerts for this symbol with close_price
 #                 await update_and_check_alerts(symbol, close_price)
 
-def jwt_required(f):
-    @wraps(f)
-    def decorated_function(*args, **kwargs):
-        try:
-            # Verify the JWT
-            verify_jwt_in_request()
-            # Optionally, you can access the JWT claims here
-            claims = get_jwt()
-            print("JWT claims:", claims)
-        except Exception as e:
-            return jsonify({"error": "Unauthorized", "message": str(e)}), 401
+def verify_jwt_token(token):
+    try:
+        # Decode with the same algo NextAuth uses (HS256 by default).
+        payload = jwt.decode(token, NEXTAUTH_SECRET, algorithms=["HS256"])
+        print(f"TOKEN: {token} --- JWT_SECRET: {NEXTAUTH_SECRET}")
+        return payload
+    except jwt.ExpiredSignatureError:
+        return None  # Token has expired
+    except jwt.InvalidTokenError:
+        return None  # Invalid token
+
+def requires_auth(f):
+    """Decorator to protect Flask routes with JWT verification."""
+    def wrapper(*args, **kwargs):
+        auth_header = request.headers.get("Authorization", None)
+        if not auth_header or not auth_header.startswith("Bearer "):
+            return jsonify({"error": "Authorization header missing"}), 401
+
+        token = auth_header.split("Bearer ")[1]
+        payload = verify_jwt_token(token)
+        if not payload:
+            return jsonify({"error": "Invalid or expired token"}), 401
+        print(f"AUTH HEADER: {auth_header}")
+        # If we need user info from the token:
+        request.user = payload
         return f(*args, **kwargs)
-    return decorated_function
+    wrapper.__name__ = f.__name__
+    return wrapper
 
 async def update_and_check_alerts(symbol, close_price):
     
@@ -258,7 +273,7 @@ async def subscribe_existing_symbols():
 
 @app.route('/api/users/updatePhoneNumber', methods=['POST'])
 # @token_required
-@jwt_required
+@requires_auth
 def update_phone_number(current_user_email):
     data = request.get_json()
     phone_number = data.get('phoneNumber')
@@ -280,7 +295,7 @@ def hello_server():
 
 @app.route('/api/users/getUserData', methods=['GET'])
 # @token_required
-@jwt_required
+@requires_auth
 def get_user_data():
     # Retrieves the user's data (including the phone number) based on their email.
     try:
