@@ -276,18 +276,29 @@ async def subscribe_existing_symbols():
 @requires_auth
 def update_phone_number(current_user_email):
     data = request.get_json()
-    phone_number = data.get('phoneNumber')
+    phone_number = data.get("phoneNumber", "")
     
     if not phone_number:
         return jsonify({'message': 'Phone number is required.'}), 400
     
-    try:
-        user_key = current_user_email.replace('.', '%2E')  # Encode email for Firebase key
-        user_ref = db.reference(f'users/{user_key}')
-        user_ref.update({'phoneNumber': phone_number})
-        return jsonify({'message': 'Phone number updated successfully.'}), 200
-    except Exception as e:
-        return jsonify({'message': f'An error occurred: {str(e)}'}), 500
+    user_email = request.user.get("email")
+    if not user_email:
+        return jsonify({"error":"No email in token"}), 401
+
+    user_id = user_email.replace(".", "_")
+    ref = db.reference(f"{user_id}")
+    ref.update({"phoneNumber": phone_number})
+
+    return jsonify({'message': 'Phone number updated successfully.'}), 200
+
+
+    # try:
+    #     user_key = current_user_email.replace('.', '%2E')  # Encode email for Firebase key
+    #     user_ref = db.reference(f'users/{user_key}')
+    #     user_ref.update({'phoneNumber': phone_number})
+    #     return jsonify({'message': 'Phone number updated successfully.'}), 200
+    # except Exception as e:
+    #     return jsonify({'message': f'An error occurred: {str(e)}'}), 500
 
 @app.route('/api')
 def hello_server():
