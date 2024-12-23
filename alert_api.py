@@ -13,6 +13,7 @@ from dotenv import load_dotenv
 import os
 from functools import wraps
 import jwt
+from flask_jwt_extended import JWTManager, verify_jwt_in_request
 
 
 load_dotenv()
@@ -36,10 +37,11 @@ firebase_admin.initialize_app(cred, {
 
 NEXTAUTH_SECRET = os.getenv('NEXTAUTH_SECRET')
 print(f'NEXTAUTH_SECRET: {NEXTAUTH_SECRET}')
-
+app.config['JWT_SECRET_KEY'] = NEXTAUTH_SECRET
 if not NEXTAUTH_SECRET:
     raise ValueError("Missing NEXTAUTH_SECRET environment variable.")
 
+jwt_ = JWTManager(app)
 
 # JWT Verification Decorator
 def token_required(f):
@@ -131,6 +133,20 @@ async def websocket_handler():
                 
 #                 # Update all alerts for this symbol with close_price
 #                 await update_and_check_alerts(symbol, close_price)
+
+def jwt_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        try:
+            # Verify the JWT
+            verify_jwt_in_request()
+            # Optionally, you can access the JWT claims here
+            claims = get_jwt()
+            print("JWT claims:", claims)
+        except Exception as e:
+            return jsonify({"error": "Unauthorized", "message": str(e)}), 401
+        return f(*args, **kwargs)
+    return decorated_function
 
 async def update_and_check_alerts(symbol, close_price):
     
@@ -241,7 +257,8 @@ async def subscribe_existing_symbols():
 # --------------------
 
 @app.route('/api/users/updatePhoneNumber', methods=['POST'])
-@token_required
+# @token_required
+@jwt_required
 def update_phone_number(current_user_email):
     data = request.get_json()
     phone_number = data.get('phoneNumber')
@@ -262,7 +279,8 @@ def hello_server():
     return "Hello_World!!!"
 
 @app.route('/api/users/getUserData', methods=['GET'])
-@token_required
+# @token_required
+@jwt_required
 def get_user_data():
     # Retrieves the user's data (including the phone number) based on their email.
     try:
