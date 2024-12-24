@@ -309,6 +309,7 @@ def hello_server():
 @requires_auth
 def get_user_data():
     # Retrieves the user's data (including the phone number) based on their email.
+    token = None
     try:
         # user_key = current_user_email.replace('.', '%2E')
         # user_key = db.reference(f'users/{user_key}')
@@ -322,6 +323,13 @@ def get_user_data():
         #     'phoneNumber': user_data.get('phoneNumber', ''),
         #     'name': user_data.get('name', '')
         # })
+        if 'Authorization' in request.headers:
+            bearer = request.headers['Authorization'].strip()
+            if bearer and bearer.startswith('Bearer '):
+                token = bearer.split('Bearer')
+
+        data = jwt.decode(token, NEXTAUTH_SECRET, algorithms=['HS256'])
+        print(f"User Token Data: {data}")
         print(f"CURRENT USER:")
         print("GET USER DATA WORKED !!!")
         return jsonify({'message': '***GET_USER_DATA***'})
