@@ -325,9 +325,10 @@ def get_user_data():
         # })
         if 'Authorization' in request.headers:
             bearer = request.headers['Authorization'].strip()
+            print(f"Bearer: {bearer}")
             if bearer and bearer.startswith('Bearer '):
                 token = bearer.split('Bearer')
-
+                print(f"Token--: {token}")
         data = jwt.decode(token, NEXTAUTH_SECRET, algorithms=['HS256'])
         print(f"User Token Data: {data}")
         print(f"CURRENT USER:")
