@@ -341,7 +341,7 @@ def get_user_data():
         else:
             #Create new user
             new_user = {
-                "phoneNumber": "",
+                "phoneNumber": "-",
                 "alerts": []
             }
             ref.child(userId).set(new_user)
