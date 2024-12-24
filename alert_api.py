@@ -332,7 +332,7 @@ def get_user_data():
         data = jwt.decode(token, NEXTAUTH_SECRET, algorithms=['HS256'])
         print(f"User Token Data: {data}")
 
-        userId = data['email'].split("@")[0]
+        userId = data['email'].split("@")[0].replace('.','_')
         ref = db.reference("users")
         user_ref = ref.child(userId).get()
 
