@@ -330,8 +330,9 @@ def get_user_data():
                 token = bearer.split('Bearer ')[1]
                 print(f"Token--: {token}")
         data = jwt.decode(token, NEXTAUTH_SECRET, algorithms=['HS256'])
-        userId = data.email.split("@")[0]
+        print(f"User Token Data: {data}")
 
+        userId = data['email'].split("@")[0]
         ref = db.reference("users")
         user_ref = ref.child(userId).get()
 
@@ -347,7 +348,6 @@ def get_user_data():
             print("User created successfully !!!")
             return jsonify({"phoneNumber": user_ref.get("phonenumber", "")}), 200
 
-        print(f"User Token Data: {data}")
         print(f"CURRENT USER:")
         print("GET USER DATA WORKED !!!")
         return jsonify({'message': '***GET_USER_DATA***'})
