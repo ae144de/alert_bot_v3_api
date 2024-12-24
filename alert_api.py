@@ -346,7 +346,7 @@ def get_user_data():
             }
             ref.child(userId).set(new_user)
             print("User created successfully !!!")
-            return jsonify({"phoneNumber": user_ref.get("phonenumber", "")}), 200
+            return jsonify({"phoneNumber": user_ref.get("phoneNumber", "")}), 200
 
         print(f"CURRENT USER:")
         print("GET USER DATA WORKED !!!")
