@@ -421,7 +421,7 @@ def create_alert():
             'type': type,
             'created_at': created_at,
             'status': status,
-            'userEmail': current_user_email,
+            # 'userEmail': current_user_email,
         }
         # alerts_ref.push(new_alert_ref)¨
 
