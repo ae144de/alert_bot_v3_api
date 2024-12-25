@@ -396,7 +396,7 @@ def create_alert():
             if bearer and bearer.startswith('Bearer '):
                 token = bearer.split('Bearer ')[1]
         user_data = jwt.decode(token, NEXTAUTH_SECRET, algorithms=['HS256'])
-        userId = userData['email'].split("@")[0].replace('.','_')
+        userId = user_data['email'].split("@")[0].replace('.','_')
         ref = db.reference("users")
         user_ref = ref.child(userId).get()
         
