@@ -369,8 +369,8 @@ def get_user_data():
         return jsonify({'message': f'Error retrieving user data: {str(e)}'}), 500
 
 @app.route('/api/alerts', methods=['POST'])
-@token_required
-def create_alert(current_user_email):
+@requires_auth
+def create_alert():
     data = request.get_json()
     print(data)
     symbol = data.get('selectedSymbol')
@@ -391,23 +391,29 @@ def create_alert(current_user_email):
     # })
 
     try:
-        user_key = current_user_email.replace('.', '%2E') # Encode email for Firebase key.
-        alerts_ref = db.reference(f'reference/{user_key}')
+        if 'Authorization' in reqest.headers:
+            bearer = request.headers['Authorization'].strip()
+            if bearer and bearer.startswith('Bearer '):
+                token = bearer.split('Bearer ')[1]
+        user_data = jwt.decode(token, NEXTAUTH_SECRET, algorithms=['HS256'])
+        userId = userData['email'].split("@")[0].replace('.','_')
+        ref = db.reference("users")
+        user_ref = ref.child(userId).get()
+        
+        #Retrieve alerts.
+        current_alerts = user_ref.get("alerts", [])
+
+        
+        
+
+        # user_key = current_user_email.replace('.', '%2E') # Encode email for Firebase key.
+        # alerts_ref = db.reference(f'reference/{user_key}')
     
         current_date = datetime.now()
         formatted_current_date = current_date.strftime("%d%m%Y%H%M%S")
         alert_id = symbol+"_tickerAlert"+"_"+formatted_current_date
     
-        # Now we use child(<id>) + set() to specify the id. Because push() method generates the id by itself.
-        # new_alert_ref = alerts_ref.child(alert_id).set({
-        #     'symbol': symbol.upper(),
-        #     'operator': operator,
-        #     'value': float(value),
-        #     'type': type,
-        #     'created_at': created_at,
-        #     'status': status,
-        #     'userEmail': current_user_email,
-        # })
+        
         new_alert_ref = {
             'symbol': symbol.upper(),
             'operator': operator,
@@ -417,7 +423,11 @@ def create_alert(current_user_email):
             'status': status,
             'userEmail': current_user_email,
         }
-        alerts_ref.push(new_alert_ref)
+        # alerts_ref.push(new_alert_ref)¨
+
+        current_alerts.append(new_alert_ref)
+        ref.child(userId).update({"alerts":current_alerts})
+
         #Schedule a subscription task.
         asyncio.run_coroutine_threadsafe(subscribe_symbol(symbol, alert_id), async_loop)
         
