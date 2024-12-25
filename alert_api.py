@@ -428,7 +428,7 @@ def create_alert():
         # current_alerts.append(new_alert_ref)
         # ref.child(userId).update({"alerts":current_alerts})
         ref.child(userId).child('alerts').child(alert_id).set(new_alert_ref)
-        
+
 
         #Schedule a subscription task.
         asyncio.run_coroutine_threadsafe(subscribe_symbol(symbol, alert_id), async_loop)
@@ -455,14 +455,35 @@ def get_alerts():
     return jsonify(alerts_list)
 
 @app.route('/api/alerts/<id>', methods=['DELETE'])
-def delete_alert(id):
+@requires_auth
+def delete_alert(alert_id):
     
-    ref = alerts_ref.child(id)
-    if ref.get() is not None:
-        ref.delete()
-        return jsonify({'status': 'deleted'}), 200
-    else:
-        return jsonify({'error': 'Alert not found'}), 404   
+    # ref = alerts_ref.child(id)
+    # if ref.get() is not None:
+    #     ref.delete()
+    #     return jsonify({'status': 'deleted'}), 200
+    # else:
+    #     return jsonify({'error': 'Alert not found'}), 404   
+
+    try:
+        if 'Authorization' in request.headers:
+            bearer = request.headers['Authorization'].strip()
+            if bearer and bearer.startswith('Bearer '):
+                token = bearer.split('Bearer ')[1]
+        user_data = jwt.decode(token, NEXTAUTH_SECRET, algorithms=['HS256'])
+        userId = user_data['email'].split("@")[0].replace('.','_')
+
+        alert_ref = db.reference('users').child(userId).child('alerts').child(alert_id)
+
+        existing_alert = alert_ref.get()
+        if not existing_alert:
+            return jsonify({"message": 'Alert not found !'}), 404
+
+        #Delete the alert
+        alert_ref.delete()
+        return jsonify({"message": 'Alert deleted successfully'}), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 def start_async_loop():
     global async_loop
