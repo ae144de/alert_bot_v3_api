@@ -438,23 +438,42 @@ def create_alert():
         return jsonify({'message' : f'An error occured: {str(e)}'}), 500
 
 @app.route('/api/alerts', methods=['GET'])
+@requires_auth
 def get_alerts():
-    snapshot = alerts_ref.get() or {}
-    # Convert to list
-    alerts_list = []
-    for key, val in snapshot.items():
-        alerts_list.append({
-            'id': key,
-            'symbol': val.get('symbol'),
-            'operator': val.get('operator'),
-            'value': val.get('value'),
-            'status': val.get('status'),
-            'type': val.get('type'),
-            'created_at': val.get('created_at'),
-        })
-    return jsonify(alerts_list)
+    # snapshot = alerts_ref.get() or {}
+    # # Convert to list
+    # alerts_list = []
+    # for key, val in snapshot.items():
+    #     alerts_list.append({
+    #         'id': key,
+    #         'symbol': val.get('symbol'),
+    #         'operator': val.get('operator'),
+    #         'value': val.get('value'),
+    #         'status': val.get('status'),
+    #         'type': val.get('type'),
+    #         'created_at': val.get('created_at'),
+    #     })
+    # return jsonify(alerts_list)
+    try:
+        if 'Authorization' in request.headers:
+            bearer = request.headers['Authorization'].strip()
+            if bearer and bearer.startswith('Bearer '):
+                token = bearer.split('Bearer ')[1]
+        user_data = jwt.decode(token, NEXTAUTH_SECRET, algorithms=['HS256'])
+        userId = user_data['email'].split("@")[0].replace('.','_')
+        
+        ref = db.reference('users')
+        user_ref = ref.child(userId).get()
 
-@app.route('/api/alerts/<id>', methods=['DELETE'])
+        if not user_ref:
+            return jsonify({"error": 'User not found !'}), 404
+
+        alerts = user_ref.get('alerts', {})
+        return jsonify({'alerts':alerts}), 200
+    except Exception as e:
+        return jsonify({'error':f'Error retrieving alerts: {str(e)}'}), 500
+
+@app.route('/api/alerts/<alert_id>', methods=['DELETE'])
 @requires_auth
 def delete_alert(alert_id):
     
