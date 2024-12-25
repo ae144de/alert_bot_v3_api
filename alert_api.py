@@ -415,6 +415,7 @@ def create_alert():
     
         
         new_alert_ref = {
+            'alert_id': alert_id,
             'symbol': symbol.upper(),
             'operator': operator,
             'value': float(value),
@@ -469,7 +470,10 @@ def get_alerts():
             return jsonify({"error": 'User not found !'}), 404
 
         alerts = user_ref.get('alerts', {})
-        return jsonify({'alerts':alerts}), 200
+
+        #Convert alerts dict to a list
+        alerts_list = list(alerts.values()) if isinstance(alerts, dict) else []
+        return jsonify({'alerts':alerts_list}), 200
     except Exception as e:
         return jsonify({'error':f'Error retrieving alerts: {str(e)}'}), 500
 
