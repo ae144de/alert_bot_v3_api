@@ -391,7 +391,7 @@ def create_alert():
     # })
 
     try:
-        if 'Authorization' in reqest.headers:
+        if 'Authorization' in request.headers:
             bearer = request.headers['Authorization'].strip()
             if bearer and bearer.startswith('Bearer '):
                 token = bearer.split('Bearer ')[1]
