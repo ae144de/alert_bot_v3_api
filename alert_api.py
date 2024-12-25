@@ -274,23 +274,36 @@ async def subscribe_existing_symbols():
 @app.route('/api/users/updatePhoneNumber', methods=['POST'])
 # @token_required
 @requires_auth
-def update_phone_number(current_user_email):
+def update_phone_number():
     data = request.get_json()
     phone_number = data.get("phoneNumber", "")
     
     if not phone_number:
         return jsonify({'message': 'Phone number is required.'}), 400
-    
-    user_email = request.user.get("email")
-    if not user_email:
-        return jsonify({"error":"No email in token"}), 401
+    try:
+        if 'Authorization' in request.headers:
+            bearer = request.headers['Authorization'].strip()
+            if bearer and bearer.startswith('Bearer '):
+                token = bearer.split('Bearer ')[1]
+        user_data = jwt.decode(token, NEXTAUTH_SECRET, algorithms=['HS256'])
 
-    user_id = user_email.replace(".", "_")
-    ref = db.reference(f"{user_id}")
-    ref.update({"phoneNumber": phone_number})
+        userId = user_data['email'].split("@")[0].replace('.', '_')
+        ref = db.reference("users")
+        user_ref = ref.child(userId).get()
 
-    return jsonify({'message': 'Phone number updated successfully.'}), 200
+        if user_ref:
+            
+            #Update the phoneNumber
+            ref.child(userId).update({"phoneNumber": phone_number})
+            return jsonify({"message": "Phone number updated successfully !"}), 200
 
+        user_id = user_email.replace(".", "_")
+        ref = db.reference(f"{user_id}")
+        ref.update({"phoneNumber": phone_number})
+
+        return jsonify({'message': "Phone number updated successfully."}), 200
+    except Exception as e:
+        return jsonify({"message": f"Error updating phone number: {str(e)}"}), 500
 
     # try:
     #     user_key = current_user_email.replace('.', '%2E')  # Encode email for Firebase key
