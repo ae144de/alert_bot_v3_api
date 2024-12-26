@@ -14,7 +14,7 @@ import os
 from functools import wraps
 import jwt
 from flask_jwt_extended import JWTManager, verify_jwt_in_request
-
+from telethon_message_sender import send_alert_notification
 
 load_dotenv()
 
@@ -140,25 +140,30 @@ def requires_auth(f):
     return wrapper
 
 async def update_and_check_alerts(symbol, close_price):
-    pass
+    
     # current_alerts = alerts_ref.get() or {}
-    # to_delete = []
-        
-    # for key, alert in current_alerts.items():
-    #     print(f"[*ALERT*]: {alert} --- [*KEY*]: {key}")
-    #     if alert.get("symbol").upper() == symbol.upper():
-            
-    #         #Check condition
-    #         operator = alert["operator"]
-    #         alert_value = float(alert["value"])
+    related_alerts = alerts.ref.order_by_child('symbol').equal_to(symbol).get()
 
-    #         print(f" ==> Close Price: {close_price} --- Operator: {operator} --- Alert Value: {alert_value}")
+    to_delete = []
+        
+    for key, alert in current_alerts.items():
+        print(f"[*ALERT*]: {alert} --- [*KEY*]: {key}")
+        if alert.get("symbol").upper() == symbol.upper():
             
-    #         if evaluate_condition(close_price, operator, alert_value):
-    #             # to_delete.append(key)
-    #             print(f"Alert {key} for {symbol} triggerend and deleted !!!")
-    #             alerts_ref.child(key).delete()
-    #             await unsubscribe_symbol(symbol, key)
+            #Check condition
+            operator = alert["operator"]
+            alert_value = float(alert["value"])
+
+            print(f" ==> Close Price: {close_price} --- Operator: {operator} --- Alert Value: {alert_value}")
+            
+            if evaluate_condition(close_price, operator, alert_value):
+                # to_delete.append(key)
+                print(f"Alert {key} for {symbol} triggerend and deleted !!!")
+                alerts_ref.child(key).delete()
+                message = f"{symbol} alert done! Close: {close_price} -- Value: {alert_value} -- Operator: {operator}"
+                alert_phone_number = "+90"+alert.get('userPhoneNumber')
+                await send_alert_notification(alert_phone_number, message)
+                await unsubscribe_symbol(symbol, key)
 
     # Fetch alert that 
 
@@ -373,7 +378,7 @@ def create_alert():
         userId = user_data['email'].split("@")[0].replace('.','_')
         ref = db.reference("users")
         user_ref = ref.child(userId).get()
-        
+        user_phone_number = user_ref.child('phoneNumber').get()
         #Retrieve alerts.
         # current_alerts = user_ref.get("alerts", [])
 
@@ -397,6 +402,7 @@ def create_alert():
             'type': type,
             'created_at': created_at,
             'status': status,
+            'userPhoneNumber': user_phone_number,
             # 'userEmail': current_user_email,
         }
         # alerts_ref.push(new_alert_ref)¨
@@ -447,11 +453,14 @@ def get_alerts():
         if not user_ref:
             return jsonify({"error": 'User not found !'}), 404
 
-        alerts = user_ref.get('alerts', {})
+        
 
         #Convert alerts dict to a list
-        alerts_list = list(alerts.values()) if isinstance(alerts, dict) else []
-        return jsonify({'alerts':alerts_list}), 200
+        # alerts_list = list(alerts.values()) if isinstance(alerts, dict) else []
+
+        alerts_for_user = alerts_ref.order_by_child('user_id').equal_to(userId).get()
+
+        return jsonify({'alerts':alerts_for_user}), 200
     except Exception as e:
         return jsonify({'error':f'Error retrieving alerts: {str(e)}'}), 500
 
