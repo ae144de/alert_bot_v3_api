@@ -378,7 +378,9 @@ def create_alert():
         userId = user_data['email'].split("@")[0].replace('.','_')
         ref = db.reference("users")
         user_ref = ref.child(userId).get()
-        user_phone_number = user_ref.child('phoneNumber').get()
+        # user_phone_number = user_ref.child('phoneNumber').get()
+        user_phone_number_ref = db.reference(f'users/{userId}/phoneNumber')
+        user_phone_number = user_phone_number_ref.get()
         #Retrieve alerts.
         # current_alerts = user_ref.get("alerts", [])
 
