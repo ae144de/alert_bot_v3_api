@@ -77,7 +77,7 @@ def token_required(f):
 
     return decorated
 
-# alerts_ref = db.reference('alerts');
+alerts_ref = db.reference('alerts');
 # Load NEXTAUTH_SECRET from environment variables
 # NEXTAUTH_SECRET = os.getenv('NEXTAUTH_SECRET')
 
@@ -400,7 +400,7 @@ def create_alert():
             # 'userEmail': current_user_email,
         }
         # alerts_ref.push(new_alert_ref)¨
-        alerts_ref = ref.reference('alerts')
+        
         alerts_ref.child(alert_id).set(new_alert_ref)
 
         # current_alerts.append(new_alert_ref)
