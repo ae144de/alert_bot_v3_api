@@ -401,8 +401,8 @@ def create_alert():
         }
         # alerts_ref.push(new_alert_ref)¨
         alerts_ref = ref.reference('alerts')
-        alerts_ref.child(alert_id)set(new_alert_ref)
-        
+        alerts_ref.child(alert_id).set(new_alert_ref)
+
         # current_alerts.append(new_alert_ref)
         # ref.child(userId).update({"alerts":current_alerts})
         # ref.child(userId).child('alerts').child(alert_id).set(new_alert_ref)
