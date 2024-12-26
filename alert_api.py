@@ -77,7 +77,7 @@ def token_required(f):
 
     return decorated
 
-alerts_ref = db.reference('alerts');
+# alerts_ref = db.reference('alerts');
 # Load NEXTAUTH_SECRET from environment variables
 # NEXTAUTH_SECRET = os.getenv('NEXTAUTH_SECRET')
 
@@ -109,30 +109,6 @@ async def websocket_handler():
                 await update_and_check_alerts(symbol, close_price)
 
 
-# async def websocket_handler():
-    
-#     global subscriptions, ws_connection
-    
-#     #Establish single base connection.
-#     async with websockets.connect(WS_URL) as ws:
-#         ws_connection = ws
-#         print("Websocket base connection established.")
-        
-#         # After connection, subscribe to all symbols from existing alerts.
-#         await subscribe_existing_symbols()
-        
-#         #Keep listening for incoming messages.
-#         async for message in ws:
-#             data = json.loads(message)
-#             print(f"[**]- Message: {data}")
-#             print(f"[##SUBSCRIPTIONS]: {subscriptions}")
-#             event_type = data.get("e")
-#             if event_type == "kline":
-#                 symbol = data["s"]
-#                 close_price = float(data["k"]["c"])
-                
-#                 # Update all alerts for this symbol with close_price
-#                 await update_and_check_alerts(symbol, close_price)
 
 def verify_jwt_token(token):
     try:
@@ -164,26 +140,28 @@ def requires_auth(f):
     return wrapper
 
 async def update_and_check_alerts(symbol, close_price):
-    
-    current_alerts = alerts_ref.get() or {}
-    to_delete = []
+    pass
+    # current_alerts = alerts_ref.get() or {}
+    # to_delete = []
         
-    for key, alert in current_alerts.items():
-        print(f"[*ALERT*]: {alert} --- [*KEY*]: {key}")
-        if alert.get("symbol").upper() == symbol.upper():
+    # for key, alert in current_alerts.items():
+    #     print(f"[*ALERT*]: {alert} --- [*KEY*]: {key}")
+    #     if alert.get("symbol").upper() == symbol.upper():
             
-            #Check condition
-            operator = alert["operator"]
-            alert_value = float(alert["value"])
+    #         #Check condition
+    #         operator = alert["operator"]
+    #         alert_value = float(alert["value"])
 
-            print(f" ==> Close Price: {close_price} --- Operator: {operator} --- Alert Value: {alert_value}")
+    #         print(f" ==> Close Price: {close_price} --- Operator: {operator} --- Alert Value: {alert_value}")
             
-            if evaluate_condition(close_price, operator, alert_value):
-                # to_delete.append(key)
-                print(f"Alert {key} for {symbol} triggerend and deleted !!!")
-                alerts_ref.child(key).delete()
-                await unsubscribe_symbol(symbol, key)
-                
+    #         if evaluate_condition(close_price, operator, alert_value):
+    #             # to_delete.append(key)
+    #             print(f"Alert {key} for {symbol} triggerend and deleted !!!")
+    #             alerts_ref.child(key).delete()
+    #             await unsubscribe_symbol(symbol, key)
+
+    # Fetch alert that 
+
     # # Delete satisfied alerts
     # for key in to_delete:
     #     # alerts_ref.child(key).delete()
@@ -313,10 +291,6 @@ def update_phone_number():
     # except Exception as e:
     #     return jsonify({'message': f'An error occurred: {str(e)}'}), 500
 
-@app.route('/api')
-def hello_server():
-    return "Hello_World!!!"
-
 @app.route('/api/users/getUserData', methods=['GET'])
 # @token_required
 @requires_auth
@@ -355,7 +329,7 @@ def get_user_data():
             #Create new user
             new_user = {
                 "phoneNumber": "-",
-                "alerts": []
+                
             }
             ref.child(userId).set(new_user)
             print("User created successfully !!!")
@@ -401,7 +375,7 @@ def create_alert():
         user_ref = ref.child(userId).get()
         
         #Retrieve alerts.
-        current_alerts = user_ref.get("alerts", [])
+        # current_alerts = user_ref.get("alerts", [])
 
         
         
@@ -415,6 +389,7 @@ def create_alert():
     
         
         new_alert_ref = {
+            'user_id': userId,
             'alert_id': alert_id,
             'symbol': symbol.upper(),
             'operator': operator,
@@ -425,10 +400,12 @@ def create_alert():
             # 'userEmail': current_user_email,
         }
         # alerts_ref.push(new_alert_ref)¨
-
+        alerts_ref = ref.reference('alerts')
+        alerts_ref.child(alert_id)set(new_alert_ref)
+        
         # current_alerts.append(new_alert_ref)
         # ref.child(userId).update({"alerts":current_alerts})
-        ref.child(userId).child('alerts').child(alert_id).set(new_alert_ref)
+        # ref.child(userId).child('alerts').child(alert_id).set(new_alert_ref)
 
 
         #Schedule a subscription task.
@@ -507,6 +484,9 @@ def delete_alert(alert_id):
         return jsonify({"message": 'Alert deleted successfully'}), 200
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+
+
+
 
 def start_async_loop():
     global async_loop
