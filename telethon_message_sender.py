@@ -1,6 +1,6 @@
 from telethon import TelegramClient
 
-async send_alert_notification(targetPhoneNumber, message):
+async def send_alert_notification(targetPhoneNumber, message):
     # 1. Replace these with your own values from https://my.telegram.org/
     api_id = 21893471  # <-- your API ID
     api_hash = '040a4c29637f6dce451130b400489720'
