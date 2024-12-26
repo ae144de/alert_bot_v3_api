@@ -142,7 +142,7 @@ def requires_auth(f):
 async def update_and_check_alerts(symbol, close_price):
     
     # current_alerts = alerts_ref.get() or {}
-    related_alerts = alerts.ref.order_by_child('symbol').equal_to(symbol).get()
+    related_alerts = alerts_ref.order_by_child('symbol').equal_to(symbol).get()
 
     to_delete = []
         
