@@ -146,7 +146,7 @@ async def update_and_check_alerts(symbol, close_price):
 
     to_delete = []
         
-    for key, alert in current_alerts.items():
+    for key, alert in related_alerts.items():
         print(f"[*ALERT*]: {alert} --- [*KEY*]: {key}")
         if alert.get("symbol").upper() == symbol.upper():
             
