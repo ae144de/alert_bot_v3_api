@@ -452,6 +452,7 @@ def get_alerts():
         ref = db.reference('users')
         user_ref = ref.child(userId).get()
 
+        print(f'User Ref: ')
         if not user_ref:
             return jsonify({"error": 'User not found !'}), 404
 
@@ -461,6 +462,7 @@ def get_alerts():
         # alerts_list = list(alerts.values()) if isinstance(alerts, dict) else []
 
         alerts_for_user = alerts_ref.order_by_child('user_id').equal_to(userId).get()
+        print(f'Alerts For the User: {alerts_for_user}')
 
         return jsonify({'alerts':alerts_for_user}), 200
     except Exception as e:
