@@ -441,6 +441,7 @@ def get_alerts():
     #         'created_at': val.get('created_at'),
     #     })
     # return jsonify(alerts_list)
+    print('++++++++++++++++++++++++++ GET ALERTS ENDPOINT ++++++++++++++++++++++++++')
     try:
         if 'Authorization' in request.headers:
             bearer = request.headers['Authorization'].strip()
