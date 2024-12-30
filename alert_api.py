@@ -442,6 +442,7 @@ def get_alerts():
     #     })
     # return jsonify(alerts_list)
     print('++++++++++++++++++++++++++ GET ALERTS ENDPOINT ++++++++++++++++++++++++++')
+    user_alerts_as_list = []
     try:
         if 'Authorization' in request.headers:
             bearer = request.headers['Authorization'].strip()
@@ -463,9 +464,12 @@ def get_alerts():
         # alerts_list = list(alerts.values()) if isinstance(alerts, dict) else []
 
         alerts_for_user = alerts_ref.order_by_child('user_id').equal_to(userId).get()
+        for key, alert in alerts_for_user.items():
+            user_alerts_as_list.append(alert)
+        print(f'Alerts For the User(as List): {user_alerts_as_list}')
         print(f'Alerts For the User: {alerts_for_user}')
 
-        return jsonify({'alerts':alerts_for_user}), 200
+        return jsonify({'alerts':user_alerts_as_list}), 200
     except Exception as e:
         return jsonify({'error':f'Error retrieving alerts: {str(e)}'}), 500
 
