@@ -280,8 +280,8 @@ def update_phone_number():
             ref.child(userId).update({"phoneNumber": phone_number})
             return jsonify({"message": "Phone number updated successfully !"}), 200
 
-        user_id = user_email.replace(".", "_")
-        ref = db.reference(f"{user_id}")
+        # user_id = user_email.replace(".", "_")
+        # ref = db.reference(f"{user_id}")
         ref.update({"phoneNumber": phone_number})
 
         return jsonify({'message': "Phone number updated successfully."}), 200
