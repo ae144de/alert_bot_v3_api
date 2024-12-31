@@ -160,9 +160,9 @@ async def update_and_check_alerts(symbol, close_price):
                 # to_delete.append(key)
                 print(f"Alert {key} for {symbol} triggerend and deleted !!!")
                 alerts_ref.child(key).delete()
-                message = f"{symbol} alert done! Close: {close_price} -- Value: {alert_value} -- Operator: {operator}"
-                alert_phone_number = "+90"+alert.get('userPhoneNumber')
-                await send_alert_notification(alert_phone_number, message)
+                # message = f"{symbol} alert done! Close: {close_price} -- Value: {alert_value} -- Operator: {operator}"
+                # alert_phone_number = "+90"+alert.get('userPhoneNumber')
+                # await send_alert_notification(alert_phone_number, message)
                 await unsubscribe_symbol(symbol, key)
 
     # Fetch alert that 
