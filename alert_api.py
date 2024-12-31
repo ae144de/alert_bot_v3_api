@@ -492,7 +492,7 @@ def delete_alert(alert_id):
         user_data = jwt.decode(token, NEXTAUTH_SECRET, algorithms=['HS256'])
         userId = user_data['email'].split("@")[0].replace('.','_')
 
-        alert_ref = db.reference('users').child(userId).child('alerts').child(alert_id)
+        alert_ref = db.reference('alerts').child(alert_id)
 
         existing_alert = alert_ref.get()
         if not existing_alert:
