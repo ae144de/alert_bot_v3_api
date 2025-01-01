@@ -198,6 +198,7 @@ async def subscribe_symbol(symbol, alert_id):
     symbol = symbol.lower()
     
     if alert_id in subscriptions and symbol in subscribed_symbols:
+        print(f"Already subscribed to {symbol} for alert {alert_id}.")
         return # If already subscribed.
     
     # Wait until ws connection established.
