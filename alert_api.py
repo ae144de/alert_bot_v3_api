@@ -15,10 +15,14 @@ from functools import wraps
 import jwt
 from flask_jwt_extended import JWTManager, verify_jwt_in_request
 from telethon_message_sender import send_alert_notification, send_telegram_message
+from colorama import init, Fore, Style
 
 load_dotenv()
 
+# Initialize colorama
+init(autoreset=True)
 app = Flask(__name__)
+
 # CORS(app, resources={r"/*":{"origins": "https://alert-bot-v3.vercel.app"}})
 CORS(app, resources={
     r"/api/*": {
@@ -100,17 +104,22 @@ async def websocket_handler():
                 await subscribe_existing_symbols()
                 #Keep listening for incoming messages.
                 async for message in ws:
-                    data = json.loads(message)
-                    # print(f"[**Message]: {data["s"]}")
-                    # print(f"[##SUBSCRIPTIONS]: {subscriptions}")
-                    event_type = data.get("e")
-                    if event_type == "kline":
-                        symbol = data["s"]
-                        close_price = float(data["k"]["c"])
-                        print(f"{symbol} ---- {close_price}")
-                        #print(f"{symbol} -- {close_price}")
-                        # Update all alerts for this symbol with close_price
-                        await update_and_check_alerts(symbol, close_price)
+                    print(f"Message received: {message}")
+                    if message == 'ping':
+                        await ws.send('pong')
+                        print(Fore.YELLOW + "Pong sent.")
+                    else:
+                        data = json.loads(message)
+                        # print(f"[**Message]: {data["s"]}")
+                        # print(f"[##SUBSCRIPTIONS]: {subscriptions}")
+                        event_type = data.get("e")
+                        if event_type == "kline":
+                            symbol = data["s"]
+                            close_price = float(data["k"]["c"])
+                            print(f"{symbol} ---- {close_price}")
+                            #print(f"{symbol} -- {close_price}")
+                            # Update all alerts for this symbol with close_price
+                            await update_and_check_alerts(symbol, close_price)
         except websockets.ConnectionClosedError:
             print("Connection closed. Reconnecting...")
             ws_connection = None
@@ -165,7 +174,7 @@ async def update_and_check_alerts(symbol, close_price):
     to_delete = []
         
     for key, alert in related_alerts.items():
-        print(f"[*ALERT*]: {alert} --- [*KEY*]: {key}")
+        print(Fore.CYAN + f"[*ALERT*]: {alert} --- [*KEY*]: {key}")
         if alert.get("symbol").upper() == symbol.upper() and alert.get("status") == "Active":
             
             #Check condition
