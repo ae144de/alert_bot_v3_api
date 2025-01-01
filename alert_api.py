@@ -536,7 +536,9 @@ def delete_alert(alert_id):
                 token = bearer.split('Bearer ')[1]
         user_data = jwt.decode(token, NEXTAUTH_SECRET, algorithms=['HS256'])
         userId = user_data['email'].split("@")[0].replace('.','_')
-
+        
+        coin_symbol = alert_id.split("_")[0]
+        
         alert_ref = db.reference('alerts').child(alert_id)
 
         existing_alert = alert_ref.get()
@@ -545,6 +547,7 @@ def delete_alert(alert_id):
 
         #Delete the alert
         alert_ref.delete()
+        asyncio.run(unsubscribe_symbol(coin_symbol, alert_id))
         return jsonify({"message": 'Alert deleted successfully'}), 200
     except Exception as e:
         return jsonify({'error': str(e)}), 500
