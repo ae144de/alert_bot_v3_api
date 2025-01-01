@@ -91,7 +91,7 @@ subscriptions_lock = asyncio.Lock()
 async def websocket_handler():
     global subscriptions, ws_connection
     #Establish single base connection.
-    async with websockets.connect(WS_URL) as ws:
+    async with websockets.connect(WS_URL, ping_interval=20, ping_timeout=20) as ws:
         ws_connection = ws
         print("Websocket base connection established.")
         # After connection, subscribe to all symbols from existing alerts.
