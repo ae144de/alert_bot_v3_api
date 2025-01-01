@@ -89,7 +89,7 @@ ws_connection = None
 subscriptions_lock = asyncio.Lock()
 
 async def websocket_handler():
-    global subscriptions, ws_connection
+    global subscriptions, ws_connection, subscribed_symbols
     #Establish single base connection.
     while True:
         try:
@@ -114,12 +114,16 @@ async def websocket_handler():
         except websockets.ConnectionClosedError:
             print("Connection closed. Reconnecting...")
             ws_connection = None
+            subscribed_symbols = set()
+            subscriptions = set()
             await asyncio.sleep(5)
             
         
         except Exception as e:
             print(f"Websocket error: {str(e)}")
             ws_connection = None
+            subscribed_symbols = set()
+            subscriptions = set()
             await asyncio.sleep(5)
             
 
