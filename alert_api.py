@@ -84,6 +84,7 @@ alerts_ref = db.reference('alerts');
 async_loop = None
 WS_URL = "wss://fstream.binance.com/ws"
 subscriptions = set()
+subscribed_symbols = set()
 ws_connection = None
 
 async def websocket_handler():
@@ -193,10 +194,10 @@ def evaluate_condition(price, operator, value):
 
 async def subscribe_symbol(symbol, alert_id):
     
-    global subscriptions, ws_connection
+    global subscriptions, ws_connection, subscribed_symbols
     symbol = symbol.lower()
     
-    if alert_id in subscriptions:
+    if alert_id in subscriptions and symbol in subscribed_symbols:
         return # If already subscribed.
     
     # Wait until ws connection established.
@@ -212,10 +213,11 @@ async def subscribe_symbol(symbol, alert_id):
     
     await ws_connection.send(json.dumps(msg))
     subscriptions.add((alert_id, symbol))
+    subscribed_symbols.add(symbol)
     print(f"Subscribed to {symbol} kline(1m) stream.")
 
 async def unsubscribe_symbol(symbol, alert_id):
-    global subscriptions, ws_connection
+    global subscriptions, ws_connection, subscribed_symbols
     symbol = symbol.lower()
     
     # Get subs that sub.symbol == symbol. And also get the number 
@@ -233,6 +235,7 @@ async def unsubscribe_symbol(symbol, alert_id):
             print(f"CORRESPONDING ALERT_ID: {alert_id}")
             if sub[0] == alert_id:
                 subscriptions.remove(sub)
+                subscribed_symbols.remove(symbol)
                 msg = {
                     "method": "UNSUBSCRIBE",
                     "params": [f"{sub[1]}@kline_1m"],
