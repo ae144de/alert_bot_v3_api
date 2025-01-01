@@ -216,6 +216,7 @@ async def subscribe_symbol(symbol, alert_id):
         subscriptions.add((alert_id, symbol))
         subscribed_symbols.add(symbol)
         print(f"Subscribed to {symbol} kline(1m) stream.")
+        await asyncio.sleep(2)
         # print(f'SUBSCRIPTIONS: {subscriptions}')
         # print(f'SUBSCRIBED_SYMBOLS: {subscribed_symbols}')
 
