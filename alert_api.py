@@ -15,7 +15,7 @@ from functools import wraps
 import jwt
 from flask_jwt_extended import JWTManager, verify_jwt_in_request
 from telethon_message_sender import send_alert_notification, send_telegram_message
-from colorama import init, Fore, Style
+from colorama import init, Fore, Style, Back
 
 load_dotenv()
 
@@ -181,7 +181,7 @@ async def update_and_check_alerts(symbol, close_price):
             operator = alert["operator"]
             alert_value = float(alert["value"])
 
-            print(f" ==> Close Price: {close_price} --- Operator: {operator} --- Alert Value: {alert_value}")
+            print(Back.GREEN + f" ==> Close Price: {close_price} --- Operator: {operator} --- Alert Value: {alert_value}")
             
             if evaluate_condition(close_price, operator, alert_value):
                 # to_delete.append(key)
