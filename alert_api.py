@@ -200,7 +200,7 @@ async def subscribe_symbol(symbol, alert_id):
     
     async with subscriptions_lock:
         # if any(sub[1] == symbol or sub[0] == alert_id for sub in subscriptions):
-        if symbol in subscribed_symbols:
+        if alert_id in subscriptions:
             print(f"Already subscribed to {symbol} for alert {alert_id}.")
             return # If already subscribed.
 
@@ -218,13 +218,14 @@ async def subscribe_symbol(symbol, alert_id):
         "id": int(uuid.uuid4().int & (1<<31)-1 ) 
     }
     
-    await ws_connection.send(json.dumps(msg))
+    if symbol not in subscribed_symbols:
+        await ws_connection.send(json.dumps(msg))
     # subscriptions.add((alert_id, symbol))
     # subscribed_symbols.add(symbol)
-    print(f"Subscribed to {symbol} kline(1m) stream.")
-    print(f"SUBSCRIPTIONS: {subscriptions}")
-    print(f"SUBSCRIBED_SYMBOLS: {subscribed_symbols}")
-    await asyncio.sleep(2)
+        print(f"Subscribed to {symbol} kline(1m) stream.")
+        print(f"SUBSCRIPTIONS: {subscriptions}")
+        print(f"SUBSCRIBED_SYMBOLS: {subscribed_symbols}")
+        await asyncio.sleep(2)
     # print(f'SUBSCRIPTIONS: {subscriptions}')
     # print(f'SUBSCRIBED_SYMBOLS: {subscribed_symbols}')
 
