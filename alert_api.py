@@ -86,6 +86,7 @@ WS_URL = "wss://fstream.binance.com/ws"
 subscriptions = set()
 subscribed_symbols = set()
 ws_connection = None
+subscriptions_lock = asyncio.Lock()
 
 async def websocket_handler():
     global subscriptions, ws_connection
@@ -197,57 +198,62 @@ async def subscribe_symbol(symbol, alert_id):
     global subscriptions, ws_connection, subscribed_symbols
     symbol = symbol.lower()
     
-    if alert_id in subscriptions and symbol in subscribed_symbols:
-        print(f"Already subscribed to {symbol} for alert {alert_id}.")
-        return # If already subscribed.
-    else:
-        # Wait until ws connection established.
-        while ws_connection is None:
-            await asyncio.sleep(1)
-            
-        #Send subscription message to the base connection.
-        msg = {
-            "method": "SUBSCRIBE",
-            "params": [f"{symbol}@kline_1m"],
-            "id": int(uuid.uuid4().int & (1<<31)-1 ) 
-        }
-        
-        await ws_connection.send(json.dumps(msg))
-        subscriptions.add((alert_id, symbol))
+    async with subscriptions_lock:
+        if alert_id in subscriptions and symbol in subscribed_symbols:
+            print(f"Already subscribed to {symbol} for alert {alert_id}.")
+            return # If already subscribed.
+
         subscribed_symbols.add(symbol)
-        print(f"Subscribed to {symbol} kline(1m) stream.")
-        await asyncio.sleep(2)
-        # print(f'SUBSCRIPTIONS: {subscriptions}')
-        # print(f'SUBSCRIBED_SYMBOLS: {subscribed_symbols}')
+        subscriptions.add((alert_id, symbol))
+        
+    # Wait until ws connection established.
+    while ws_connection is None:
+        await asyncio.sleep(1)
+        
+    #Send subscription message to the base connection.
+    msg = {
+        "method": "SUBSCRIBE",
+        "params": [f"{symbol}@kline_1m"],
+        "id": int(uuid.uuid4().int & (1<<31)-1 ) 
+    }
+    
+    await ws_connection.send(json.dumps(msg))
+    # subscriptions.add((alert_id, symbol))
+    # subscribed_symbols.add(symbol)
+    print(f"Subscribed to {symbol} kline(1m) stream.")
+    await asyncio.sleep(2)
+    # print(f'SUBSCRIPTIONS: {subscriptions}')
+    # print(f'SUBSCRIBED_SYMBOLS: {subscribed_symbols}')
 
 async def unsubscribe_symbol(symbol, alert_id):
     global subscriptions, ws_connection, subscribed_symbols
     symbol = symbol.lower()
     
-    # Get subs that sub.symbol == symbol. And also get the number 
-    # of how many of them.
-    matching_alerts = [sub for sub in subscriptions if sub[1] == symbol]
-    number_of_matching_subs = len(matching_alerts)
-    print(f"[++MATCHING_ALERTS]: {matching_alerts} --- [++NUMOFMA]: {number_of_matching_subs}")
-    if matching_alerts and number_of_matching_subs > 1:
-        for sub in subscriptions:
-            if sub[0] == alert_id:
-                subscriptions.remove(sub)
-                break
-    else:
-        for sub in subscriptions:
-            print(f"CORRESPONDING ALERT_ID: {alert_id}")
-            if sub[0] == alert_id:
-                subscriptions.remove(sub)
-                subscribed_symbols.remove(symbol)
-                msg = {
-                    "method": "UNSUBSCRIBE",
-                    "params": [f"{sub[1]}@kline_1m"],
-                    "id": int(uuid.uuid4().int & (1<<31)-1)
-                }
-                await ws_connection.send(json.dumps(msg))
-                print(f"Unsubscribed from {symbol}.")
-                break
+    async with subscriptions_lock:
+        # Get subs that sub.symbol == symbol. And also get the number 
+        # of how many of them.
+        matching_alerts = [sub for sub in subscriptions if sub[1] == symbol]
+        number_of_matching_subs = len(matching_alerts)
+        print(f"[++MATCHING_ALERTS]: {matching_alerts} --- [++NUMOFMA]: {number_of_matching_subs}")
+        if matching_alerts and number_of_matching_subs > 1:
+            for sub in subscriptions:
+                if sub[0] == alert_id:
+                    subscriptions.remove(sub)
+                    break
+        else:
+            for sub in subscriptions:
+                print(f"CORRESPONDING ALERT_ID: {alert_id}")
+                if sub[0] == alert_id:
+                    subscriptions.remove(sub)
+                    subscribed_symbols.remove(symbol)
+                    msg = {
+                        "method": "UNSUBSCRIBE",
+                        "params": [f"{sub[1]}@kline_1m"],
+                        "id": int(uuid.uuid4().int & (1<<31)-1)
+                    }
+                    await ws_connection.send(json.dumps(msg))
+                    print(f"Unsubscribed from {symbol}.")
+                    break
         
 async def subscribe_existing_symbols():
     # When the server starts or websocket restarts, fetch alerts and resubscribe to symbol.
