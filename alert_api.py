@@ -161,6 +161,7 @@ async def update_and_check_alerts(symbol, close_price):
                 print(f"Alert {key} for {symbol} triggerend and deleted !!!")
                 # alerts_ref.child(key).delete()
                 # message = f"{symbol} alert done! Close: {close_price} -- Value: {alert_value} -- Operator: {operator}"
+                alerts_ref.child(key).update({"status": "Done"})
                 test_message = 'This is the test message sent from the telethon!!!'
                 # alert_phone_number = "+905367906728"+alert.get('userPhoneNumber')
                 # print(f"ALERT_PHONE_NUMBER: {alert_phone_number}")
