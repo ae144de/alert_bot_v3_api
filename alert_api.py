@@ -200,24 +200,24 @@ async def subscribe_symbol(symbol, alert_id):
     if alert_id in subscriptions and symbol in subscribed_symbols:
         print(f"Already subscribed to {symbol} for alert {alert_id}.")
         return # If already subscribed.
-    
-    # Wait until ws connection established.
-    while ws_connection is None:
-        await asyncio.sleep(1)
+    else:
+        # Wait until ws connection established.
+        while ws_connection is None:
+            await asyncio.sleep(1)
+            
+        #Send subscription message to the base connection.
+        msg = {
+            "method": "SUBSCRIBE",
+            "params": [f"{symbol}@kline_1m"],
+            "id": int(uuid.uuid4().int & (1<<31)-1 ) 
+        }
         
-    #Send subscription message to the base connection.
-    msg = {
-        "method": "SUBSCRIBE",
-        "params": [f"{symbol}@kline_1m"],
-        "id": int(uuid.uuid4().int & (1<<31)-1 ) 
-    }
-    
-    await ws_connection.send(json.dumps(msg))
-    subscriptions.add((alert_id, symbol))
-    subscribed_symbols.add(symbol)
-    print(f"Subscribed to {symbol} kline(1m) stream.")
-    print(f'SUBSCRIPTIONS: {subscriptions}')
-    print(f'SUBSCRIBED_SYMBOLS: {subscribed_symbols}')
+        await ws_connection.send(json.dumps(msg))
+        subscriptions.add((alert_id, symbol))
+        subscribed_symbols.add(symbol)
+        print(f"Subscribed to {symbol} kline(1m) stream.")
+        # print(f'SUBSCRIPTIONS: {subscriptions}')
+        # print(f'SUBSCRIBED_SYMBOLS: {subscribed_symbols}')
 
 async def unsubscribe_symbol(symbol, alert_id):
     global subscriptions, ws_connection, subscribed_symbols
