@@ -199,43 +199,39 @@ async def subscribe_symbol(symbol, alert_id):
     symbol = symbol.lower()
     
     async with subscriptions_lock:
-        # if any(sub[1] == symbol or sub[0] == alert_id for sub in subscriptions):
-        if alert_id in subscriptions:
+        # Check if the alert_id is already in the subscriptions
+        if any(sub[0] == alert_id for sub in subscriptions):
             print(f"Already subscribed to {symbol} for alert {alert_id}.")
-            return # If already subscribed. 
+            return  # If already subscribed.
 
-       
-        
-    # Wait until ws connection established.
+        # Check if the symbol is already in the subscribed_symbols set
+        if symbol in subscribed_symbols:
+            print(f"Symbol {symbol} is already subscribed.")
+            subscriptions.add((alert_id, symbol))
+            return
+
+    # Wait until ws connection is established.
     while ws_connection is None:
         await asyncio.sleep(1)
-    
-    # Check if the symbol is already in the subscribed_symbols set
-    if symbol in subscribed_symbols:
-        print(f"Symbol {symbol} is already subscribed.")
-        return
-    
-    #Send subscription message to the base connection.
+
+    # Send subscription message to the base connection.
     msg = {
         "method": "SUBSCRIBE",
         "params": [f"{symbol}@kline_1m"],
-        "id": int(uuid.uuid4().int & (1<<31)-1 ) 
+        "id": int(uuid.uuid4().int & (1 << 31) - 1)
     }
-    
-    # if symbol not in subscribed_symbols:
+
     await ws_connection.send(json.dumps(msg))
-    # subscriptions.add((alert_id, symbol))
-    # subscribed_symbols.add(symbol)
     print(f"Subscribed to {symbol} kline(1m) stream.")
-    
+
     async with subscriptions_lock:
         # Add the subscription to the sets after sending the message
         subscriptions.add((alert_id, symbol))
         subscribed_symbols.add(symbol)
-        
+
     await asyncio.sleep(2)
-    print(f"SUBSCRIPTIONS: {subscriptions}")
-    print(f"SUBSCRIBED_SYMBOLS: {subscribed_symbols}")
+    print(f'SUBSCRIPTIONS: {subscriptions}')
+    print(f'SUBSCRIBED_SYMBOLS: {subscribed_symbols}')
  
 
 async def unsubscribe_symbol(symbol, alert_id):
