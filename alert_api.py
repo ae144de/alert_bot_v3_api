@@ -14,7 +14,7 @@ import os
 from functools import wraps
 import jwt
 from flask_jwt_extended import JWTManager, verify_jwt_in_request
-from telethon_message_sender import send_alert_notification
+from telethon_message_sender import send_alert_notification, send_telegram_message
 
 load_dotenv()
 
@@ -164,7 +164,9 @@ async def update_and_check_alerts(symbol, close_price):
                 test_message = 'This is the test message sent from the telethon!!!'
                 # alert_phone_number = "+905367906728"+alert.get('userPhoneNumber')
                 # print(f"ALERT_PHONE_NUMBER: {alert_phone_number}")
-                await send_alert_notification('+905367906728', test_message)
+                
+                # await send_alert_notification('+905367906728', test_message)
+                send_telegram_message(alert.get('botToken'), alert.get('chatId'), test_message)
                 await unsubscribe_symbol(symbol, key)
 
     # Fetch alert that 
@@ -412,6 +414,12 @@ def create_alert():
         # user_phone_number = user_ref.child('phoneNumber').get()
         user_phone_number_ref = db.reference(f'users/{userId}/phoneNumber')
         user_phone_number = user_phone_number_ref.get()
+        
+        user_bot_token_ref = db.reference(f'users/{userId}/botToken')
+        user_bot_token = user_bot_token_ref.get()
+        user_chat_id_ref = db.reference(f'users/{userId}/chatId')
+        user_chat_id = user_chat_id_ref.get()
+        
         #Retrieve alerts.
         # current_alerts = user_ref.get("alerts", [])
 
@@ -436,6 +444,8 @@ def create_alert():
             'created_at': created_at,
             'status': status,
             'userPhoneNumber': user_phone_number,
+            'botToken': user_bot_token,
+            'chatId': user_chat_id,
             # 'userEmail': current_user_email,
         }
         # alerts_ref.push(new_alert_ref)¨
