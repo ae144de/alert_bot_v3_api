@@ -91,25 +91,37 @@ subscriptions_lock = asyncio.Lock()
 async def websocket_handler():
     global subscriptions, ws_connection
     #Establish single base connection.
-    async with websockets.connect(WS_URL, ping_interval=20, ping_timeout=20) as ws:
-        ws_connection = ws
-        print("Websocket base connection established.")
-        # After connection, subscribe to all symbols from existing alerts.
-        await subscribe_existing_symbols()
-        #Keep listening for incoming messages.
-        async for message in ws:
-            data = json.loads(message)
-            # print(f"[**Message]: {data["s"]}")
-            # print(f"[##SUBSCRIPTIONS]: {subscriptions}")
-            event_type = data.get("e")
-            if event_type == "kline":
-                symbol = data["s"]
-                close_price = float(data["k"]["c"])
-                print(f"{symbol} ---- {close_price}")
-                #print(f"{symbol} -- {close_price}")
-                # Update all alerts for this symbol with close_price
-                await update_and_check_alerts(symbol, close_price)
-
+    while True:
+        try:
+            async with websockets.connect(WS_URL, ping_interval=40, ping_timeout=40) as ws:
+                ws_connection = ws
+                print("Websocket base connection established.")
+                # After connection, subscribe to all symbols from existing alerts.
+                await subscribe_existing_symbols()
+                #Keep listening for incoming messages.
+                async for message in ws:
+                    data = json.loads(message)
+                    # print(f"[**Message]: {data["s"]}")
+                    # print(f"[##SUBSCRIPTIONS]: {subscriptions}")
+                    event_type = data.get("e")
+                    if event_type == "kline":
+                        symbol = data["s"]
+                        close_price = float(data["k"]["c"])
+                        print(f"{symbol} ---- {close_price}")
+                        #print(f"{symbol} -- {close_price}")
+                        # Update all alerts for this symbol with close_price
+                        await update_and_check_alerts(symbol, close_price)
+        except websockets.ConnectionClosedError:
+            print("Connection closed. Reconnecting...")
+            ws_connection = None
+            await asyncio.sleep(5)
+            
+        
+        except Exception as e:
+            print(f"Websocket error: {str(e)}")
+            ws_connection = None
+            await asyncio.sleep(5)
+            
 
 
 def verify_jwt_token(token):
