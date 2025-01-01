@@ -256,6 +256,35 @@ async def subscribe_existing_symbols():
 # REST API Endpoints
 # --------------------
 
+@app.route('/api/users/connectUserBot', methods=['POST'])
+@requires_auth
+def connect_user_bot():
+    data = request.get_json()
+    print(f"DATA: {data}")
+    phone_number = data.get('phoneNumber', "")
+    bot_token = data.get('botToken', "")
+    chat_id = data.get('chatId', "")
+    
+    if not phone_number or not bot_token or not chat_id:
+        return jsonify({'error': 'Invalid payload'}), 400
+    try:
+        if 'Authorization' in request.headers:
+            bearer = request.headers['Authorization'].strip()
+            if bearer and bearer.startswith('Bearer '):
+                token = bearer.split('Bearer ')[1]
+        user_data = jwt.decode(token, NEXTAUTH_SECRET, algorithms=['HS256'])
+        userId = user_data['email'].split("@")[0].replace('.','_')
+        ref = db.reference("users")
+        user_ref = ref.child(userId).get()
+        if user_ref:
+            ref.child(userId).update({"phoneNumber": phone_number, "botToken": bot_token, "chatId": chat_id})
+            return jsonify({"message": "User bot connected successfully !"}), 200
+        
+        ref.child(userId).update({"phoneNumber": phone_number, "botToken": bot_token, "chatId": chat_id})
+        return jsonify({"message": "User bot connected successfully !"}), 200
+    except Exception as e:
+        return jsonify({"message": f"Error connecting user bot: {str(e)}"}), 500
+
 @app.route('/api/users/updatePhoneNumber', methods=['POST'])
 # @token_required
 @requires_auth
