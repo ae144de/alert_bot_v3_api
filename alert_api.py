@@ -199,7 +199,7 @@ async def subscribe_symbol(symbol, alert_id):
     symbol = symbol.lower()
     
     async with subscriptions_lock:
-        if alert_id in subscriptions and symbol in subscribed_symbols:
+        if symbol in subscriptions:
             print(f"Already subscribed to {symbol} for alert {alert_id}.")
             return # If already subscribed.
 
