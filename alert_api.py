@@ -148,7 +148,7 @@ async def update_and_check_alerts(symbol, close_price):
         
     for key, alert in related_alerts.items():
         print(f"[*ALERT*]: {alert} --- [*KEY*]: {key}")
-        if alert.get("symbol").upper() == symbol.upper():
+        if alert.get("symbol").upper() == symbol.upper() and alert.get("status") == "Active":
             
             #Check condition
             operator = alert["operator"]
@@ -160,15 +160,16 @@ async def update_and_check_alerts(symbol, close_price):
                 # to_delete.append(key)
                 print(f"Alert {key} for {symbol} triggerend and deleted !!!")
                 # alerts_ref.child(key).delete()
-                # message = f"{symbol} alert done! Close: {close_price} -- Value: {alert_value} -- Operator: {operator}"
-                alerts_ref.child(key).update({"status": "Done"})
-                test_message = 'This is the test message sent from the telethon!!!'
+                message = f"{symbol} alert done! Close: {close_price} -- Value: {alert_value} -- Operator: {operator}"
+                # test_message = 'This is the test message sent from the telethon!!!'
                 # alert_phone_number = "+905367906728"+alert.get('userPhoneNumber')
                 # print(f"ALERT_PHONE_NUMBER: {alert_phone_number}")
                 
                 # await send_alert_notification('+905367906728', test_message)
-                send_telegram_message(alert.get('botToken'), alert.get('chatId'), test_message)
+                send_telegram_message(alert.get('botToken'), alert.get('chatId'), message)
                 await unsubscribe_symbol(symbol, key)
+                alerts_ref.child(key).update({"status": "Done"})
+                
 
     # Fetch alert that 
 
