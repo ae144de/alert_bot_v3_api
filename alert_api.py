@@ -367,6 +367,8 @@ def get_user_data():
             #Create new user
             new_user = {
                 "phoneNumber": "-",
+                "botToken": "-",
+                "chatId": "-",
                 
             }
             ref.child(userId).set(new_user)
