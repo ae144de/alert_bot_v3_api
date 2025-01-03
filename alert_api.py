@@ -91,6 +91,7 @@ subscriptions = set()
 subscribed_symbols = set()
 ws_connection = None
 subscriptions_lock = asyncio.Lock()
+previous_close_prices = {}
 
 async def websocket_handler():
     global subscriptions, ws_connection, subscribed_symbols
@@ -207,16 +208,56 @@ async def update_and_check_alerts(symbol, close_price):
     #     print(f"Alert {key} for {symbol} triggerend and deleted !!!")
     #     await unsubscribe_symbol(symbol, key)
         
-def evaluate_condition(price, operator, value):
-    if operator == '>':
-        return price > value
-    elif operator == '<':
-        return price < value
-    elif operator == '>=':
-        return price >= value
-    elif operator == '<=':
-        return price <= value
-    return False
+# def evaluate_condition(price, operator, value):
+#     global previous_close_prices
+
+#     if operator == '>':
+#         return price > value
+#     elif operator == '<':
+#         return price < value
+#     elif operator == '>=':
+#         return price >= value
+#     elif operator == '<=':
+#         return price <= value
+#     return False
+
+def evaluate_condition(price, threshold, operator, symbol, percentage=None, channel=None):
+    # price: Current price
+    # threshold: The value to compare with
+    # operator: The comparison operator
+    # symbol: The symbol
+    # previous_price: The previous price
+    # percentage: The percentage change
+    # channel: The channel range
+
+    global previous_close_prices
+    previous_price = previous_close_prices.get(symbol)
+
+    if operator == 'Crossing':
+        result = previous_price is not None and ((previous_price < threshold and price >= threshold) or (previous_price > threshold and price <= threshold))
+    elif operator == 'Crossing Up':
+        result = previous_price is not None and previous_price < threshold and price >= threshold
+    elif operator == 'Crossing Down':
+        result = previous_price is not None and previous_price > threshold and price <= threshold
+    elif operator == 'Entering Channel':
+        result = previous_price is not None and channel is not None and channel[0] <= price <= channel[1] and not (channel[0] <= previous_price <= channel[1])
+    elif operator == 'Exiting Channel':
+        result = previous_price is not None and channel is not None and not (channel[0] <= price <= channel[1]) and (channel[0] <= previous_price <= channel[1])
+    elif operator == 'Moving Up %':
+        result = previous_price is not None and ((price - previous_price) / previous_price) * 100 >= percentage
+    elif operator == 'Moving Down %':
+        result = previous_price is not None and ((previous_price - price) / previous_price) * 100 >= percentage
+    elif operator == 'Greater than':
+        result = price > threshold
+    elif operator == 'Less than':
+        result = price < threshold
+    else:
+        raise ValueError(f"Unknown operator: {operator}")
+
+    # Update the previous value
+    previous_price[symbol] = price
+
+    return result
 
 async def subscribe_symbol(symbol, alert_id):
     
