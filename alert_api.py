@@ -181,10 +181,12 @@ async def update_and_check_alerts(symbol, close_price):
             #Check condition
             operator = alert["operator"]
             alert_value = float(alert["value"])
+            lower_bound = float(alert['lowerBound'])
+            upper_bound = float(alert['upperBound'])
 
             print(Back.GREEN + f" ==> Close Price: {close_price} --- Operator: {operator} --- Alert Value: {alert_value}")
             
-            if evaluate_condition(close_price, operator, alert_value):
+            if evaluate_condition(close_price, alert_value, operator, symbol, lower_bound=lower_bound, upper_bound=upper_bound):
                 # to_delete.append(key)
                 print(f"Alert {key} for {symbol} triggerend and deleted !!!")
                 # alerts_ref.child(key).delete()
@@ -221,7 +223,7 @@ async def update_and_check_alerts(symbol, close_price):
 #         return price <= value
 #     return False
 
-def evaluate_condition(price, threshold, operator, symbol, percentage=None, channel=None):
+def evaluate_condition(price, threshold, operator, symbol, lower_bound=None, upper_bound=None):
     # price: Current price
     # threshold: The value to compare with
     # operator: The comparison operator
@@ -240,13 +242,13 @@ def evaluate_condition(price, threshold, operator, symbol, percentage=None, chan
     elif operator == 'Crossing Down':
         result = previous_price is not None and previous_price > threshold and price <= threshold
     elif operator == 'Entering Channel':
-        result = previous_price is not None and channel is not None and channel[0] <= price <= channel[1] and not (channel[0] <= previous_price <= channel[1])
+        result = previous_price is not None and lower_bound is not None and upper_bound is not None and (lower_bound <= price <= upper_bound) and not (lower_bound <= previous_price <= upper_bound)
     elif operator == 'Exiting Channel':
-        result = previous_price is not None and channel is not None and not (channel[0] <= price <= channel[1]) and (channel[0] <= previous_price <= channel[1])
+        result = previous_price is not None and lower_bound is not None and upper_bound is not None and not (lower_bound <= price <= upper_bound) and (lower_bound <= previous_price <= upper_bound)
     elif operator == 'Moving Up %':
-        result = previous_price is not None and ((price - previous_price) / previous_price) * 100 >= percentage
+        result = previous_price is not None and ((price - previous_price) / previous_price) * 100 >= threshold
     elif operator == 'Moving Down %':
-        result = previous_price is not None and ((previous_price - price) / previous_price) * 100 >= percentage
+        result = previous_price is not None and ((previous_price - price) / previous_price) * 100 >= threshold
     elif operator == 'Greater than':
         result = price > threshold
     elif operator == 'Less than':
