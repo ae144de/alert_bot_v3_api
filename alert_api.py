@@ -372,8 +372,9 @@ async def subscribe_existing_symbols():
 
     for key, alert in current_alerts.items():
         symbol = alert.get('symbol')
+        status = alert.get('status')
         alert_id = key
-        if symbol:
+        if symbol and status == 'Active':
             symbols_to_subscribe.add((symbol.upper(), alert_id))
 
     # Subscribe to each symbol.
