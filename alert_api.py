@@ -186,9 +186,18 @@ async def update_and_check_alerts(symbol, close_price):
             # lower_bound = alert.get('lowerBound', None)
             # upper_bound = alert.get('upperBound', None)
 
-            if lower_bound is not '-' or upper_bound is not '-':
+            if lower_bound != '-' and upper_bound != '-':
                 lower_bound = float(lower_bound)
                 upper_bound = float(upper_bound)
+            elif lower_bound != '-':
+                lower_bound = float(lower_bound)
+                upper_bound = None
+            elif upper_bound != '-':
+                upper_bound = float(upper_bound)
+                lower_bound = None
+            else:
+                lower_bound = None
+                upper_bound = None
 
             print(Back.GREEN + f" ==> Close Price: {close_price} --- Operator: {operator} --- Alert Value: {alert_value}")
             
