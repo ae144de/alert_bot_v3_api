@@ -479,14 +479,28 @@ def get_user_data():
 def create_alert():
     data = request.get_json()
     print(data)
+    # symbol = data.get('selectedSymbol')
+    # operator = data.get('operator')
+    # value = data.get('value')
+    # type = data.get('type')
+    # created_at = data.get('created_at')
+    # status = data.get('status')
+
     symbol = data.get('selectedSymbol')
     operator = data.get('operator')
     value = data.get('value')
     type = data.get('type')
     created_at = data.get('created_at')
     status = data.get('status')
+    lower_bound = data.get('lowerBound')
+    upper_bound = data.get('upperBound')
+    alert_title = data.get('alertTitle')
+    expiration_date = data.get('expiration')
+    trigger = data.get('trigger')
+    message = data.get('message')
 
-    if not symbol or operator not in ['>', '<', '>=', '<=', '=='] or value is None:
+    valid_operators = ['Crossing', 'Crossing Up', 'Crossing Down', 'Entering Channel', 'Exiting Channel', 'Moving Up %', 'Moving Down %', 'Greater than', 'Less than']
+    if not symbol or operator not in valid_operators or value is None:
         return jsonify({'error': 'Invalid payload'}), 400
 
     # # Push alert to Firebase
@@ -537,6 +551,12 @@ def create_alert():
             'type': type,
             'created_at': created_at,
             'status': status,
+            'lowerBound': lower_bound,
+            'upperBound': upper_bound,
+            'alertTitle': alert_title,
+            'expiration': expiration_date,
+            'trigger': trigger,
+            'message': message,
             'userPhoneNumber': user_phone_number,
             'botToken': user_bot_token,
             'chatId': user_chat_id,
