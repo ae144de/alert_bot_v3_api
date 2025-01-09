@@ -215,14 +215,16 @@ async def update_and_check_alerts(symbol, close_price):
                     await unsubscribe_symbol(symbol, key)
                     alerts_ref.child(key).update({"status": "Done"})
                 elif trigger == 'Every Time':
-                    if last_triggered == '-' or (current_time - last_triggered) >= 60:
+                    if last_triggered == '-':
                         print(f"Alert {key} for {symbol} triggered !!!")
                         message = f"{symbol} alert triggered! Close: {close_price} -- Value: {alert_value} -- Operator: {operator}"
                         send_telegram_message(alert.get('botToken'), alert.get('chatId'), message)
                         alerts_ref.child(key).update({"last_triggered": current_time})
-                        if current_time - last_triggered >= 120:
-                            await unsubscribe_symbol(symbol, key)
-                            alerts_ref.child(key).update({"status": "Done"})
+                    elif isinstance(last_triggered, float) and (current_time - last_triggered ) >= 60:
+                        print(f"Alert {key} for {symbol} triggered !!!")
+                        message = f"{symbol} alert triggered! Close: {close_price} -- Value: {alert_value} -- Operator: {operator}"
+                        send_telegram_message(alert.get('botToken'), alert.get('chatId'), message)
+                        alerts_ref.child(key).update({"last_triggered": current_time})f
 
     # Fetch alert that 
 
