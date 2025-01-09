@@ -128,15 +128,15 @@ async def websocket_handler():
             subscribed_symbols = set()
             subscriptions = set()
             await asyncio.sleep(5)
-            
-        
+
+
         except Exception as e:
             print(f"Websocket error: {str(e)}")
             ws_connection = None
             subscribed_symbols = set()
             subscriptions = set()
             await asyncio.sleep(5)
-            
+
 
 
 def verify_jwt_token(token):
@@ -169,16 +169,16 @@ def requires_auth(f):
     return wrapper
 
 async def update_and_check_alerts(symbol, close_price):
-    
+
     # current_alerts = alerts_ref.get() or {}
     related_alerts = alerts_ref.order_by_child('symbol').equal_to(symbol).get()
 
     to_delete = []
-        
+
     for key, alert in related_alerts.items():
         print(Fore.CYAN + f"[*ALERT*]: {alert} --- [*KEY*]: {key}")
         if alert.get("symbol").upper() == symbol.upper() and alert.get("status") == "Active":
-            
+
             #Check condition
             operator = alert["operator"]
             alert_value = float(alert["value"])
@@ -186,6 +186,7 @@ async def update_and_check_alerts(symbol, close_price):
             upper_bound = alert['upperBound']
             trigger = alert['trigger']
             last_triggered = alert['last_triggered']
+            first_triggered = alert['first_triggered']
             expiration_date = alert['expiration']
             # lower_bound = alert.get('lowerBound', None)
             # upper_bound = alert.get('upperBound', None)
@@ -205,7 +206,7 @@ async def update_and_check_alerts(symbol, close_price):
                     continue
 
             print(Back.GREEN + f" ==> Close Price: {close_price} --- Operator: {operator} --- Alert Value: {alert_value}")
-            
+
             if evaluate_condition(close_price, alert_value, operator, symbol, lower_bound, upper_bound):
                 current_time = time.time()
                 if trigger == 'Only Once':
@@ -216,18 +217,23 @@ async def update_and_check_alerts(symbol, close_price):
                     await unsubscribe_symbol(symbol, key)
                     alerts_ref.child(key).update({"status": "Done"})
                 elif trigger == 'Every Time':
-                    if last_triggered == '-':
+                    if last_triggered == '-' and first_triggered == '-':
                         print(f"Alert {key} for {symbol} triggered !!!")
                         message = f"{symbol} alert triggered! Close: {close_price} -- Value: {alert_value} -- Operator: {operator}"
                         send_telegram_message(alert.get('botToken'), alert.get('chatId'), message)
                         alerts_ref.child(key).update({"last_triggered": current_time})
+                        alerts_ref.child(key).update({"first_triggered": current_time})
                     elif isinstance(last_triggered, float) and (current_time - last_triggered ) >= 60:
                         print(f"Alert {key} for {symbol} triggered !!!")
                         message = f"{symbol} alert triggered! Close: {close_price} -- Value: {alert_value} -- Operator: {operator}"
                         send_telegram_message(alert.get('botToken'), alert.get('chatId'), message)
                         alerts_ref.child(key).update({"last_triggered": current_time})
+                    elif isinstance(first_triggered, float) and (current_time - first_triggered) >= 120:
+                        print(Back.BLUE + f"Alert {key} for {symbol} HAS BEEN SATISFIED !!!")
+                        await unsubscribe_symbol(symbol, key)
+                        alerts_ref.child(key).update({"status": "Done"})
 
-    # Fetch alert that 
+    # Fetch alert that
 
     # # Delete satisfied alerts
     # for key in to_delete:
@@ -235,7 +241,7 @@ async def update_and_check_alerts(symbol, close_price):
     #     # Notify or log
     #     print(f"Alert {key} for {symbol} triggerend and deleted !!!")
     #     await unsubscribe_symbol(symbol, key)
-        
+
 # def evaluate_condition(price, operator, value):
 #     global previous_close_prices
 
@@ -289,10 +295,10 @@ def evaluate_condition(price, threshold, operator, symbol, lower_bound=None, upp
     return result
 
 async def subscribe_symbol(symbol, alert_id):
-    
+
     global subscriptions, ws_connection, subscribed_symbols
     symbol = symbol.lower()
-    
+
     async with subscriptions_lock:
         # Check if the alert_id is already in the subscriptions
         if any(sub[0] == alert_id for sub in subscriptions):
@@ -327,14 +333,14 @@ async def subscribe_symbol(symbol, alert_id):
     await asyncio.sleep(2)
     print(f'SUBSCRIPTIONS: {subscriptions}')
     print(f'SUBSCRIBED_SYMBOLS: {subscribed_symbols}')
- 
+
 
 async def unsubscribe_symbol(symbol, alert_id):
     global subscriptions, ws_connection, subscribed_symbols
     symbol = symbol.lower()
-    
+
     async with subscriptions_lock:
-        # Get subs that sub.symbol == symbol. And also get the number 
+        # Get subs that sub.symbol == symbol. And also get the number
         # of how many of them.
         matching_alerts = [sub for sub in subscriptions if sub[1] == symbol]
         number_of_matching_subs = len(matching_alerts)
@@ -358,18 +364,18 @@ async def unsubscribe_symbol(symbol, alert_id):
                     await ws_connection.send(json.dumps(msg))
                     print(f"Unsubscribed from {symbol}.")
                     break
-        
+
 async def subscribe_existing_symbols():
     # When the server starts or websocket restarts, fetch alerts and resubscribe to symbol.
     current_alerts = alerts_ref.get() or {}
     symbols_to_subscribe = set()
-    
+
     for key, alert in current_alerts.items():
         symbol = alert.get('symbol')
         alert_id = key
         if symbol:
             symbols_to_subscribe.add((symbol.upper(), alert_id))
-    
+
     # Subscribe to each symbol.
     for sym in symbols_to_subscribe:
         await subscribe_symbol(sym[0], sym[1])
@@ -385,7 +391,7 @@ def connect_user_bot():
     phone_number = data.get('phoneNumber', "")
     bot_token = data.get('botToken', "")
     chat_id = data.get('chatId', "")
-    
+
     if not phone_number or not bot_token or not chat_id:
         return jsonify({'error': 'Invalid payload'}), 400
     try:
@@ -400,7 +406,7 @@ def connect_user_bot():
         if user_ref:
             ref.child(userId).update({"phoneNumber": phone_number, "botToken": bot_token, "chatId": chat_id})
             return jsonify({"message": "User bot connected successfully !"}), 200
-        
+
         ref.child(userId).update({"phoneNumber": phone_number, "botToken": bot_token, "chatId": chat_id})
         return jsonify({"message": "User bot connected successfully !"}), 200
     except Exception as e:
@@ -412,7 +418,7 @@ def connect_user_bot():
 def update_phone_number():
     data = request.get_json()
     phone_number = data.get("phoneNumber", "")
-    
+
     if not phone_number:
         return jsonify({'message': 'Phone number is required.'}), 400
     try:
@@ -427,7 +433,7 @@ def update_phone_number():
         user_ref = ref.child(userId).get()
 
         if user_ref:
-            
+
             #Update the phoneNumber
             ref.child(userId).update({"phoneNumber": phone_number})
             return jsonify({"message": "Phone number updated successfully !"}), 200
@@ -488,7 +494,7 @@ def get_user_data():
                 "phoneNumber": "-",
                 "botToken": "-",
                 "chatId": "-",
-                
+
             }
             ref.child(userId).set(new_user)
             print("User created successfully !!!")
@@ -556,26 +562,26 @@ def create_alert():
         # user_phone_number = user_ref.child('phoneNumber').get()
         user_phone_number_ref = db.reference(f'users/{userId}/phoneNumber')
         user_phone_number = user_phone_number_ref.get()
-        
+
         user_bot_token_ref = db.reference(f'users/{userId}/botToken')
         user_bot_token = user_bot_token_ref.get()
         user_chat_id_ref = db.reference(f'users/{userId}/chatId')
         user_chat_id = user_chat_id_ref.get()
-        
+
         #Retrieve alerts.
         # current_alerts = user_ref.get("alerts", [])
 
-        
-        
+
+
 
         # user_key = current_user_email.replace('.', '%2E') # Encode email for Firebase key.
         # alerts_ref = db.reference(f'reference/{user_key}')
-    
+
         current_date = datetime.now()
         formatted_current_date = current_date.strftime("%d%m%Y%H%M%S")
         alert_id = symbol+"_tickerAlert"+"_"+formatted_current_date
-    
-        
+
+
         new_alert_ref = {
             'user_id': userId,
             'alert_id': alert_id,
@@ -595,10 +601,11 @@ def create_alert():
             'botToken': user_bot_token,
             'chatId': user_chat_id,
             'last_triggered': '-',
+            'first_triggered': '-',
             # 'userEmail': current_user_email,
         }
         # alerts_ref.push(new_alert_ref)¨
-        
+
         alerts_ref.child(alert_id).set(new_alert_ref)
         #df
 
@@ -609,7 +616,7 @@ def create_alert():
 
         #Schedule a subscription task.
         asyncio.run_coroutine_threadsafe(subscribe_symbol(symbol, alert_id), async_loop)
-        
+
         return jsonify({'status': 'created', 'id': alert_id}), 201
     except Exception as e:
         return jsonify({'message' : f'An error occured: {str(e)}'}), 500
@@ -640,7 +647,7 @@ def get_alerts():
                 token = bearer.split('Bearer ')[1]
         user_data = jwt.decode(token, NEXTAUTH_SECRET, algorithms=['HS256'])
         userId = user_data['email'].split("@")[0].replace('.','_')
-        
+
         ref = db.reference('users')
         user_ref = ref.child(userId).get()
 
@@ -648,7 +655,7 @@ def get_alerts():
         if not user_ref:
             return jsonify({"error": 'User not found !'}), 404
 
-        
+
 
         #Convert alerts dict to a list
         # alerts_list = list(alerts.values()) if isinstance(alerts, dict) else []
@@ -666,13 +673,13 @@ def get_alerts():
 @app.route('/api/alerts/<alert_id>', methods=['DELETE'])
 @requires_auth
 def delete_alert(alert_id):
-    
+
     # ref = alerts_ref.child(id)
     # if ref.get() is not None:
     #     ref.delete()
     #     return jsonify({'status': 'deleted'}), 200
     # else:
-    #     return jsonify({'error': 'Alert not found'}), 404   
+    #     return jsonify({'error': 'Alert not found'}), 404
 
     try:
         if 'Authorization' in request.headers:
@@ -681,9 +688,9 @@ def delete_alert(alert_id):
                 token = bearer.split('Bearer ')[1]
         user_data = jwt.decode(token, NEXTAUTH_SECRET, algorithms=['HS256'])
         userId = user_data['email'].split("@")[0].replace('.','_')
-        
+
         coin_symbol = alert_id.split("_")[0]
-        
+
         alert_ref = db.reference('alerts').child(alert_id)
 
         existing_alert = alert_ref.get()
@@ -705,7 +712,7 @@ def start_async_loop():
     async_loop = asyncio.new_event_loop()
     asyncio.set_event_loop(async_loop)
     async_loop.run_until_complete(websocket_handler())
-    
+
 threading.Thread(target=start_async_loop, daemon=True).start()
 
 
