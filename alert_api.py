@@ -194,6 +194,10 @@ async def update_and_check_alerts(symbol, close_price):
                 expiration_date = datetime.fromisoformat(expiration_date)
                 current_date = datetime.now()
 
+                # Convert current_date to naive datetime if expiration_date is naive
+                if expiration_date.tzinfo is None:
+                    current_date = current_date.replace(tzinfo=None)
+
                 if current_date > expiration_date:
                     print(f"Alert {key} for {symbol} expired !!!")
                     alerts_ref.child(key).update({"status": "Expired"})
