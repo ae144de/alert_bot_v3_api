@@ -16,6 +16,7 @@ import jwt
 from flask_jwt_extended import JWTManager, verify_jwt_in_request
 from telethon_message_sender import send_alert_notification, send_telegram_message
 from colorama import init, Fore, Style, Back
+import time
 
 load_dotenv()
 
@@ -183,26 +184,38 @@ async def update_and_check_alerts(symbol, close_price):
             alert_value = float(alert["value"])
             lower_bound = alert['lowerBound']
             upper_bound = alert['upperBound']
+            trigger = alert['trigger']
+            last_triggered = alert['last_triggered']
+            expiration_date = alert['expiration']
             # lower_bound = alert.get('lowerBound', None)
             # upper_bound = alert.get('upperBound', None)
 
-            
+            if expiration_date != '-' and expiration_date is not None:
+                expiration_date = datetime.fromisoformat(expiration_date)
+                current_date = datetime.now()
 
+                if current_date > expiration_date:
+                    print(f"Alert {key} for {symbol} expired !!!")
+                    alerts_ref.child(key).update({"status": "Expired"})
+                    await unsubscribe_symbol(symbol, key)
+                    continue
+                
             print(Back.GREEN + f" ==> Close Price: {close_price} --- Operator: {operator} --- Alert Value: {alert_value}")
             
             if evaluate_condition(close_price, alert_value, operator, symbol, lower_bound, upper_bound):
-                # to_delete.append(key)
-                print(f"Alert {key} for {symbol} triggerend and deleted !!!")
-                # alerts_ref.child(key).delete()
-                message = f"{symbol} alert done! Close: {close_price} -- Value: {alert_value} -- Operator: {operator}"
-                # test_message = 'This is the test message sent from the telethon!!!'
-                # alert_phone_number = "+905367906728"+alert.get('userPhoneNumber')
-                # print(f"ALERT_PHONE_NUMBER: {alert_phone_number}")
-                
-                # await send_alert_notification('+905367906728', test_message)
-                send_telegram_message(alert.get('botToken'), alert.get('chatId'), message)
-                await unsubscribe_symbol(symbol, key)
-                alerts_ref.child(key).update({"status": "Done"})
+                current_time = time.time()
+                if trigger == 'Only Once':
+                    print(f"Alert {key} for {symbol} triggerend and deleted !!!")
+                    message = f"{symbol} alert done! Close: {close_price} -- Value: {alert_value} -- Operator: {operator}"
+                    send_telegram_message(alert.get('botToken'), alert.get('chatId'), message)
+                    await unsubscribe_symbol(symbol, key)
+                    alerts_ref.child(key).update({"status": "Done"})
+                elif trigger == 'Every Time':
+                    if last_triggered is None or (current_time - last_triggered) >= 60:
+                        print(f"Alert {key} for {symbol} triggered !!!")
+                        message = f"{symbol} alert triggered! Close: {close_price} -- Value: {alert_value} -- Operator: {operator}"
+                        send_telegram_message(alert.get('botToken'), alert.get('chatId'), message)
+                        alerts_ref.child(key).update({"last_triggered": current_time})
                 
 
     # Fetch alert that 
@@ -572,6 +585,7 @@ def create_alert():
             'userPhoneNumber': user_phone_number,
             'botToken': user_bot_token,
             'chatId': user_chat_id,
+            'last_triggered': None,
             # 'userEmail': current_user_email,
         }
         # alerts_ref.push(new_alert_ref)¨
