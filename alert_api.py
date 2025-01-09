@@ -192,7 +192,7 @@ async def update_and_check_alerts(symbol, close_price):
 
             print(Back.GREEN + f" ==> Close Price: {close_price} --- Operator: {operator} --- Alert Value: {alert_value}")
             
-            if evaluate_condition(close_price, alert_value, operator, symbol, lower_bound=lower_bound, upper_bound=upper_bound):
+            if evaluate_condition(close_price, alert_value, operator, symbol, lower_bound, upper_bound):
                 # to_delete.append(key)
                 print(f"Alert {key} for {symbol} triggerend and deleted !!!")
                 # alerts_ref.child(key).delete()
@@ -229,7 +229,7 @@ async def update_and_check_alerts(symbol, close_price):
 #         return price <= value
 #     return False
 
-def evaluate_condition(price, threshold, operator, symbol, lower_bound=None, upper_bound=None):
+def evaluate_condition(price, threshold, operator, symbol, lower_bound, upper_bound):
     # price: Current price
     # threshold: The value to compare with
     # operator: The comparison operator
