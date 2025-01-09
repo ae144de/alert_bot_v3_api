@@ -511,7 +511,7 @@ def create_alert():
     if expiration_date is None:
         expiration_date = '-'
 
-    valid_operators = ['Crossing', 'Crossing Up', 'Crossing Down', 'Entering Channel', 'Exiting Channel', 'Moving Up %', 'Moving Down %', 'Greater than', 'Less than']
+    valid_operators = ['Crossing', 'Crossing Up', 'Crossing Down', 'Entering Channel', 'Exiting Channel', 'Moving Up %', 'Moving Down %', 'Greater Than', 'Less Than']
     if not symbol or operator not in valid_operators or value is None:
         return jsonify({'error': 'Invalid payload'}), 400
 
