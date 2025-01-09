@@ -212,6 +212,7 @@ async def update_and_check_alerts(symbol, close_price):
                     print(f"Alert {key} for {symbol} triggerend and deleted !!!")
                     message = f"{symbol} alert done! Close: {close_price} -- Value: {alert_value} -- Operator: {operator}"
                     send_telegram_message(alert.get('botToken'), alert.get('chatId'), message)
+                    print(Back.GREEN + f"Unsubscribing from {symbol} kline_1m !!!")
                     await unsubscribe_symbol(symbol, key)
                     alerts_ref.child(key).update({"status": "Done"})
                 elif trigger == 'Every Time':
