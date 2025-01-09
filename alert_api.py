@@ -261,7 +261,8 @@ def evaluate_condition(price, threshold, operator, symbol, lower_bound=None, upp
         raise ValueError(f"Unknown operator: {operator}")
 
     # Update the previous value
-    previous_price[symbol] = price
+    # previous_price[symbol] = price
+    previous_close_prices[symbol] = price
 
     return result
 
