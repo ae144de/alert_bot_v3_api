@@ -509,6 +509,8 @@ def create_alert():
         lower_bound = '-'
     if upper_bound is None:
         upper_bound = '-'
+    if expiration_date is None:
+        expiration_date = '-'
 
     valid_operators = ['Crossing', 'Crossing Up', 'Crossing Down', 'Entering Channel', 'Exiting Channel', 'Moving Up %', 'Moving Down %', 'Greater than', 'Less than']
     if not symbol or operator not in valid_operators or value is None:
