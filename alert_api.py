@@ -253,9 +253,9 @@ def evaluate_condition(price, threshold, operator, symbol, lower_bound=None, upp
         result = previous_price is not None and ((price - previous_price) / previous_price) * 100 >= threshold
     elif operator == 'Moving Down %':
         result = previous_price is not None and ((previous_price - price) / previous_price) * 100 >= threshold
-    elif operator == 'Greater than':
+    elif operator == 'Greater Than':
         result = price > threshold
-    elif operator == 'Less than':
+    elif operator == 'Less Than':
         result = price < threshold
     else:
         raise ValueError(f"Unknown operator: {operator}")
