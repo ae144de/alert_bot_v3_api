@@ -181,12 +181,12 @@ async def update_and_check_alerts(symbol, close_price):
             #Check condition
             operator = alert["operator"]
             alert_value = float(alert["value"])
-            # lower_bound = float(alert['lowerBound'])
-            # upper_bound = float(alert['upperBound'])
-            lower_bound = alert.get('lowerBound', None)
-            upper_bound = alert.get('upperBound', None)
+            lower_bound = alert['lowerBound']
+            upper_bound = alert['upperBound']
+            # lower_bound = alert.get('lowerBound', None)
+            # upper_bound = alert.get('upperBound', None)
 
-            if lower_bound is not None or upper_bound is not None:
+            if lower_bound is not '-' or upper_bound is not '-':
                 lower_bound = float(lower_bound)
                 upper_bound = float(upper_bound)
 
@@ -498,8 +498,8 @@ def create_alert():
     type = data.get('type')
     created_at = data.get('created_at')
     status = data.get('status')
-    lower_bound = data.get('lowerBound')
-    upper_bound = data.get('upperBound')
+    lower_bound = data.get('lowerBound', '-')
+    upper_bound = data.get('upperBound', '-')
     alert_title = data.get('alertTitle')
     expiration_date = data.get('expiration')
     trigger = data.get('trigger')
