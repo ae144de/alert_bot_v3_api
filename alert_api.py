@@ -5,7 +5,7 @@ import json
 import firebase_admin
 from firebase_admin import credentials, db
 import websockets
-from datetime import datetime
+from datetime import datetime, timezone
 import uuid
 from flask_cors import CORS
 # from auth import token_required
@@ -192,7 +192,7 @@ async def update_and_check_alerts(symbol, close_price):
 
             if expiration_date != '-' and expiration_date is not None:
                 expiration_date = datetime.fromisoformat(expiration_date)
-                current_date = datetime.now()
+                current_date = datetime.now(timezone.utc)
 
                 # Convert current_date to naive datetime if expiration_date is naive
                 if expiration_date.tzinfo is None:
