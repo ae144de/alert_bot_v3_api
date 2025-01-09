@@ -199,7 +199,7 @@ async def update_and_check_alerts(symbol, close_price):
                     alerts_ref.child(key).update({"status": "Expired"})
                     await unsubscribe_symbol(symbol, key)
                     continue
-                
+
             print(Back.GREEN + f" ==> Close Price: {close_price} --- Operator: {operator} --- Alert Value: {alert_value}")
             
             if evaluate_condition(close_price, alert_value, operator, symbol, lower_bound, upper_bound):
@@ -211,7 +211,7 @@ async def update_and_check_alerts(symbol, close_price):
                     await unsubscribe_symbol(symbol, key)
                     alerts_ref.child(key).update({"status": "Done"})
                 elif trigger == 'Every Time':
-                    if last_triggered is None or (current_time - last_triggered) >= 60:
+                    if last_triggered == '-' or (current_time - last_triggered) >= 60:
                         print(f"Alert {key} for {symbol} triggered !!!")
                         message = f"{symbol} alert triggered! Close: {close_price} -- Value: {alert_value} -- Operator: {operator}"
                         send_telegram_message(alert.get('botToken'), alert.get('chatId'), message)
@@ -585,7 +585,7 @@ def create_alert():
             'userPhoneNumber': user_phone_number,
             'botToken': user_bot_token,
             'chatId': user_chat_id,
-            'last_triggered': None,
+            'last_triggered': '-',
             # 'userEmail': current_user_email,
         }
         # alerts_ref.push(new_alert_ref)¨
