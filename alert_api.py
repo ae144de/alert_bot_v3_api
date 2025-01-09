@@ -498,12 +498,17 @@ def create_alert():
     type = data.get('type')
     created_at = data.get('created_at')
     status = data.get('status')
-    lower_bound = data.get('lowerBound', '-')
-    upper_bound = data.get('upperBound', '-')
+    lower_bound = data.get('lowerBound')
+    upper_bound = data.get('upperBound')
     alert_title = data.get('alertTitle')
     expiration_date = data.get('expiration')
     trigger = data.get('trigger')
     message = data.get('message')
+
+    if lower_bound is None:
+        lower_bound = '-'
+    if upper_bound is None:
+        upper_bound = '-'
 
     valid_operators = ['Crossing', 'Crossing Up', 'Crossing Down', 'Entering Channel', 'Exiting Channel', 'Moving Up %', 'Moving Down %', 'Greater than', 'Less than']
     if not symbol or operator not in valid_operators or value is None:
