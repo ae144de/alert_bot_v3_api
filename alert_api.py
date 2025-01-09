@@ -224,7 +224,7 @@ async def update_and_check_alerts(symbol, close_price):
                         print(f"Alert {key} for {symbol} triggered !!!")
                         message = f"{symbol} alert triggered! Close: {close_price} -- Value: {alert_value} -- Operator: {operator}"
                         send_telegram_message(alert.get('botToken'), alert.get('chatId'), message)
-                        alerts_ref.child(key).update({"last_triggered": current_time})f
+                        alerts_ref.child(key).update({"last_triggered": current_time})
 
     # Fetch alert that 
 
