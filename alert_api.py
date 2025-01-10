@@ -269,6 +269,7 @@ def evaluate_condition(price, threshold, operator, symbol, lower_bound=None, upp
     print(Back.LIGHTGREEN_EX + f"PREVIOUS PRICE: {previous_price} --- CURRENT PRICE: {price} --- THRESHOLD: {threshold} --- OPERATOR: {operator}")
     if operator == 'Crossing':
         result = previous_price is not None and ((previous_price < threshold and price >= threshold) or (previous_price > threshold and price <= threshold))
+        print(Back.YELLOW + f"RESULT: {result}")
     elif operator == 'Crossing Up':
         result = previous_price is not None and previous_price < threshold and price >= threshold
     elif operator == 'Crossing Down':
