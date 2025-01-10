@@ -252,7 +252,8 @@ async def update_and_check_alerts(symbol, close_price):
 #     elif operator == '>=':
 #         return price >= value
 #     elif operator == '<=':
-#         return price <= value
+#         return price <= value,
+
 #     return False
 
 def evaluate_condition(price, threshold, operator, symbol, lower_bound=None, upper_bound=None):
