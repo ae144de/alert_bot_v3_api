@@ -261,36 +261,36 @@ def evaluate_condition(price, threshold, operator, symbol, lower_bound=None, upp
     # threshold: The value to compare with
     # operator: The comparison operator
     # symbol: The symbol
-    # previous_price: The previous price
+    # previous_close_prices[symbol]: The previous price
     # percentage: The percentage change
     # channel: The channel range
 
     global previous_close_prices
-    previous_price = previous_close_prices.get(symbol)
-    print(Back.LIGHTGREEN_EX + f"PREVIOUS PRICE: {previous_price} --- CURRENT PRICE: {price} --- THRESHOLD: {threshold} --- OPERATOR: {operator}")
+    # previous_close_prices[symbol] = previous_close_prices.get(symbol)
+    print(Back.LIGHTGREEN_EX + f"PREVIOUS PRICE: {previous_close_prices[symbol]} --- CURRENT PRICE: {price} --- THRESHOLD: {threshold} --- OPERATOR: {operator}")
     print(Back.BLACK + f"Previous close prices: {previous_close_prices}")
     
-    if previous_price is None:
-        previous_close_prices[symbol]
+    if previous_close_prices[symbol] is None:
+        previous_close_prices[symbol] = price
         print(Back.RED + f"PREVIOUS PRICE IS NONE !!!")
-        print(Back.RED + f"PREVIOUS PRICE: {previous_price} --- CURRENT PRICE: {price} --- THRESHOLD: {threshold} --- OPERATOR: {operator}")
+        print(Back.RED + f"PREVIOUS PRICE: {previous_close_prices[symbol]} --- CURRENT PRICE: {price} --- THRESHOLD: {threshold} --- OPERATOR: {operator}")
         return False
     
     if operator == 'Crossing':
-        result = previous_price is not None and ((previous_price < threshold and price >= threshold) or (previous_price > threshold and price <= threshold))
+        result = previous_close_prices[symbol] is not None and ((previous_close_prices[symbol] < threshold and price >= threshold) or (previous_close_prices[symbol] > threshold and price <= threshold))
         print(Back.YELLOW + f"RESULT: {result}")
     elif operator == 'Crossing Up':
-        result = previous_price is not None and previous_price < threshold and price >= threshold
+        result = previous_close_prices[symbol] is not None and previous_close_prices[symbol] < threshold and price >= threshold
     elif operator == 'Crossing Down':
-        result = previous_price is not None and previous_price > threshold and price <= threshold
+        result = previous_close_prices[symbol] is not None and previous_close_prices[symbol] > threshold and price <= threshold
     elif operator == 'Entering Channel':
-        result = previous_price is not None and lower_bound is not None and upper_bound is not None and (lower_bound <= price <= upper_bound) and not (lower_bound <= previous_price <= upper_bound)
+        result = previous_close_prices[symbol] is not None and lower_bound is not None and upper_bound is not None and (lower_bound <= price <= upper_bound) and not (lower_bound <= previous_close_prices[symbol] <= upper_bound)
     elif operator == 'Exiting Channel':
-        result = previous_price is not None and lower_bound is not None and upper_bound is not None and not (lower_bound <= price <= upper_bound) and (lower_bound <= previous_price <= upper_bound)
+        result = previous_close_prices[symbol] is not None and lower_bound is not None and upper_bound is not None and not (lower_bound <= price <= upper_bound) and (lower_bound <= previous_close_prices[symbol] <= upper_bound)
     elif operator == 'Moving Up %':
-        result = previous_price is not None and ((price - previous_price) / previous_price) * 100 >= threshold
+        result = previous_close_prices[symbol] is not None and ((price - previous_close_prices[symbol]) / previous_close_prices[symbol]) * 100 >= threshold
     elif operator == 'Moving Down %':
-        result = previous_price is not None and ((previous_price - price) / previous_price) * 100 >= threshold
+        result = previous_close_prices[symbol] is not None and ((previous_close_prices[symbol] - price) / previous_close_prices[symbol]) * 100 >= threshold
     elif operator == 'Greater Than':
         result = price > threshold
     elif operator == 'Less Than':
@@ -299,9 +299,9 @@ def evaluate_condition(price, threshold, operator, symbol, lower_bound=None, upp
         raise ValueError(f"Unknown operator: {operator}")
 
     # Update the previous value
-    # previous_price[symbol] = price
+    # previous_close_prices[symbol][symbol] = price
     # previous_close_prices[symbol] = price
-    previous_close_prices[symbol]
+    previous_close_prices[symbol] = price
     print(Back.LIGHTCYAN_EX + f"Previous close prices after operator check: {previous_close_prices}")
     return result
 
