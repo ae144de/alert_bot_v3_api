@@ -266,12 +266,12 @@ def evaluate_condition(price, threshold, operator, symbol, lower_bound=None, upp
     # channel: The channel range
 
     global previous_close_prices
-    previous_price = previous_close_prices['symbol']
+    previous_price = previous_close_prices[symbol]
     print(Back.LIGHTGREEN_EX + f"PREVIOUS PRICE: {previous_price} --- CURRENT PRICE: {price} --- THRESHOLD: {threshold} --- OPERATOR: {operator}")
     print(Back.BLACK + f"Previous close prices: {previous_close_prices}")
     
     if previous_price is None:
-        previous_close_prices['symbol'] = price
+        previous_close_prices[symbol]
         print(Back.RED + f"PREVIOUS PRICE IS NONE !!!")
         print(Back.RED + f"PREVIOUS PRICE: {previous_price} --- CURRENT PRICE: {price} --- THRESHOLD: {threshold} --- OPERATOR: {operator}")
         return False
@@ -301,8 +301,7 @@ def evaluate_condition(price, threshold, operator, symbol, lower_bound=None, upp
     # Update the previous value
     # previous_price[symbol] = price
     # previous_close_prices[symbol] = price
-    # previous_price = price
-    previous_close_prices['symbol'] = price
+    previous_close_prices[symbol]
     print(Back.LIGHTCYAN_EX + f"Previous close prices after operator check: {previous_close_prices}")
     return result
 
