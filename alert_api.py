@@ -267,10 +267,11 @@ def evaluate_condition(price, threshold, operator, symbol, lower_bound=None, upp
 
     global previous_close_prices
     # previous_close_prices[symbol] = previous_close_prices.get(symbol)
+    previous_price = previous_close_prices.get(symbol)
     # print(Back.LIGHTGREEN_EX + f"PREVIOUS PRICE: {previous_close_prices[symbol]} --- CURRENT PRICE: {price} --- THRESHOLD: {threshold} --- OPERATOR: {operator}")
     print(Back.BLACK + f"Previous close prices: {previous_close_prices}")
     
-    if previous_close_prices[symbol] is None:
+    if previous_price is None:
         previous_close_prices[symbol] = price
         print(Back.RED + f"PREVIOUS PRICE IS NONE !!!")
         print(Back.RED + f"PREVIOUS PRICE: {previous_close_prices[symbol]} --- CURRENT PRICE: {price} --- THRESHOLD: {threshold} --- OPERATOR: {operator}")
