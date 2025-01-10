@@ -300,7 +300,8 @@ def evaluate_condition(price, threshold, operator, symbol, lower_bound=None, upp
 
     # Update the previous value
     # previous_price[symbol] = price
-    previous_close_prices[symbol] = price
+    # previous_close_prices[symbol] = price
+    previous_price = price
     print(Back.LIGHTCYAN_EX + f"Previous close prices after operator check: {previous_close_prices}")
     return result
 
