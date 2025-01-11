@@ -118,7 +118,11 @@ async def websocket_handler():
                         event_type = data.get("e")
                         if event_type == "kline":
                             symbol = data["s"]
-                            previous_price = previous_close_prices[symbol]
+                            previous_price = previous_close_prices.get(symbol)
+                            if previous_price is None:
+                                previous_close_prices[symbol] = close_price
+                                print(f"No previous price for {symbol}, initializing at {close_price}...")
+                                continue  # or do a return, but in a while-loop "continue" is typical
                             close_price = float(data["k"]["c"])
                             previous_close_prices[symbol] = close_price
                             print(f"{symbol} ---- {close_price}")
