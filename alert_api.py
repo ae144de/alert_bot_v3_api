@@ -402,6 +402,10 @@ async def subscribe_existing_symbols():
 # REST API Endpoints
 # --------------------
 
+@app.route('/api/test', methods=['GET'])
+def test():
+    return jsonify({'message': 'Test endpoint'}), 200
+
 @app.route('/api/users/connectUserBot', methods=['POST'])
 @requires_auth
 def connect_user_bot():
