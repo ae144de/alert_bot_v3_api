@@ -106,6 +106,7 @@ async def websocket_handler():
                 await subscribe_existing_symbols()
                 #Keep listening for incoming messages.
                 async for message in ws:
+                    
                     print(f"Message received: {message}")
                     if message == 'ping':
                         await ws.send('pong')
@@ -117,11 +118,13 @@ async def websocket_handler():
                         event_type = data.get("e")
                         if event_type == "kline":
                             symbol = data["s"]
+                            previous_price = previous_close_prices[symbol]
                             close_price = float(data["k"]["c"])
+                            previous_close_prices[symbol] = close_price
                             print(f"{symbol} ---- {close_price}")
                             #print(f"{symbol} -- {close_price}")
                             # Update all alerts for this symbol with close_price
-                            await update_and_check_alerts(symbol, close_price)
+                            await update_and_check_alerts(symbol, close_price, previous_price)
                             
         except websockets.ConnectionClosedError:
             print("Connection closed. Reconnecting...")
@@ -169,7 +172,7 @@ def requires_auth(f):
     wrapper.__name__ = f.__name__
     return wrapper
 
-async def update_and_check_alerts(symbol, close_price):
+async def update_and_check_alerts(symbol, close_price, previous_price):
 
     # current_alerts = alerts_ref.get() or {}
     related_alerts = alerts_ref.order_by_child('symbol').equal_to(symbol).get()
@@ -208,7 +211,7 @@ async def update_and_check_alerts(symbol, close_price):
 
             print(Back.GREEN + f" ==> Close Price: {close_price} --- Operator: {operator} --- Alert Value: {alert_value}")
 
-            if evaluate_condition(close_price, alert_value, operator, symbol, lower_bound, upper_bound):
+            if evaluate_condition(close_price, alert_value, operator, symbol, lower_bound, upper_bound, previous_price):
                 current_time = time.time()
                 if trigger == 'Only Once':
                     print(f"Alert {key} for {symbol} triggerend and deleted !!!")
@@ -257,7 +260,7 @@ async def update_and_check_alerts(symbol, close_price):
 
 #     return False
 
-def evaluate_condition(price, threshold, operator, symbol, lower_bound=None, upper_bound=None):
+def evaluate_condition(price, threshold, operator, symbol, lower_bound=None, upper_bound=None, previous_price=None):
     # price: Current price
     # threshold: The value to compare with
     # operator: The comparison operator
@@ -266,16 +269,14 @@ def evaluate_condition(price, threshold, operator, symbol, lower_bound=None, upp
     # percentage: The percentage change
     # channel: The channel range
 
-    global previous_close_prices
-    previous_price = previous_close_prices.get(symbol)
     print(Back.LIGHTGREEN_EX + f"PREVIOUS PRICE: {previous_price} --- CURRENT PRICE: {price} --- THRESHOLD: {threshold} --- OPERATOR: {operator}")
     print(Back.BLACK + f"Previous close prices: {previous_close_prices}")
     
-    if previous_price is None:
-        previous_close_prices[symbol] = price
-        print(Back.RED + f"PREVIOUS PRICE IS NONE !!!")
-        print(Back.RED + f"PREVIOUS PRICE: {previous_price} --- CURRENT PRICE: {price} --- THRESHOLD: {threshold} --- OPERATOR: {operator}")
-        return False
+    # if previous_price is None:
+    #     previous_close_prices[symbol] = price
+    #     print(Back.RED + f"PREVIOUS PRICE IS NONE !!!")
+    #     print(Back.RED + f"PREVIOUS PRICE: {previous_price} --- CURRENT PRICE: {price} --- THRESHOLD: {threshold} --- OPERATOR: {operator}")
+    #     return False
     
     if operator == 'Crossing':
         result = previous_price is not None and ((previous_price < threshold and price >= threshold) or (previous_price > threshold and price <= threshold))
@@ -302,7 +303,6 @@ def evaluate_condition(price, threshold, operator, symbol, lower_bound=None, upp
     # Update the previous value
     # previous_price[symbol] = price
     # previous_close_prices[symbol] = price
-    previous_close_prices[symbol] = price
     print(Back.LIGHTCYAN_EX + f"Previous close prices after operator check: {previous_close_prices}")
     return result
 
