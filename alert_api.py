@@ -17,6 +17,7 @@ from flask_jwt_extended import JWTManager, verify_jwt_in_request
 from telethon_message_sender import send_alert_notification, send_telegram_message
 from colorama import init, Fore, Style, Back
 import time
+from flask_socketio import SocketIO, emit
 
 load_dotenv()
 
@@ -178,6 +179,9 @@ def requires_auth(f):
     wrapper.__name__ = f.__name__
     return wrapper
 
+socketio = SocketIO(app)
+
+
 async def update_and_check_alerts(symbol, close_price, previous_price):
 
     # current_alerts = alerts_ref.get() or {}
@@ -226,6 +230,7 @@ async def update_and_check_alerts(symbol, close_price, previous_price):
                     print(Back.GREEN + f"Unsubscribing from {symbol} kline_1m !!!")
                     await unsubscribe_symbol(symbol, key)
                     alerts_ref.child(key).update({"status": "Done"})
+                    socketio.emit('alert', {'status': 'Done'})
                 elif trigger == 'Every Time':
                     if last_triggered == '-' and first_triggered == '-':
                         print(f"Alert {key} for {symbol} triggered !!!")
