@@ -238,10 +238,10 @@ async def update_and_check_alerts(symbol, close_price, previous_price):
                         message = f"{symbol} alert triggered! Close: {close_price} -- Value: {alert_value} -- Operator: {operator}"
                         send_telegram_message(alert.get('botToken'), alert.get('chatId'), message)
                         alerts_ref.child(key).update({"last_triggered": current_time})
-                    elif isinstance(first_triggered, float) and (current_time - first_triggered) >= 120:
-                        print(Back.BLUE + f"Alert {key} for {symbol} HAS BEEN SATISFIED !!!")
-                        await unsubscribe_symbol(symbol, key)
-                        alerts_ref.child(key).update({"status": "Done"})
+                    # elif isinstance(first_triggered, float) and (current_time - first_triggered) >= 120:
+                    #     print(Back.BLUE + f"Alert {key} for {symbol} HAS BEEN SATISFIED !!!")
+                    #     await unsubscribe_symbol(symbol, key)
+                    #     alerts_ref.child(key).update({"status": "Done"})
 
     # Fetch alert that
 
