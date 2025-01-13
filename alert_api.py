@@ -179,7 +179,7 @@ def requires_auth(f):
     wrapper.__name__ = f.__name__
     return wrapper
 
-socketio = SocketIO(app)
+socketio = SocketIO(app, cors_allowed_origins="*")
 
 
 async def update_and_check_alerts(symbol, close_price, previous_price):
