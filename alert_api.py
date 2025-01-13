@@ -727,8 +727,43 @@ def delete_alert(alert_id):
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
+@app.route('/api/alerts/<alert_id>/pause', methods=['POST'])
+@requires_auth
+def pause_alert(alert_id):
+    try:
+        alert_ref = alerts_ref.child(alert_id)
+        alert = alert_ref.get()
+        if not alert:
+            return jsonify({"message": 'Alert not found !'}), 404
+        
+        alert_ref.update({"status": "Paused"})
+        print(f"Alert {alert_id} paused successfully !!!")
+        return jsonify({"message": 'Alert paused successfully'}), 200
+        
+    except Exception as e:
+        print(f"Error pausing alert: {str(e)}")
+        return jsonify({'error': str(e)}), 500
 
-
+@app.route('/api/alerts/<alert_id>/start', methods=['POST'])
+@requires_auth
+def start_alert(alert_id):
+    try:
+        alert_ref = alerts_ref.child(alert_id)
+        alert = alert_ref.get()
+        if not alert:
+            return jsonify({"message": 'Alert not found !'}), 404
+        
+        if alert['status'] in ['Done', 'Expired', 'Paused']:
+            alert_ref.update({"status": "Active"})
+            print(f"Alert {alert_id} started successfully !!!")
+            return jsonify({"message": 'Alert started successfully'}), 200
+        else:
+            print(f"Alert {alert_id} is already active !!!")
+            return jsonify({"message": 'Alert is already active'}), 200
+        
+    except Exception as e:
+        print(f"Error starting alert: {str(e)}")
+        return jsonify({'error': str(e)}), 500
 
 def start_async_loop():
     global async_loop
