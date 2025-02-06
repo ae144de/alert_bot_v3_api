@@ -50,7 +50,7 @@ if not NEXTAUTH_SECRET:
     raise ValueError("Missing NEXTAUTH_SECRET environment variable.")
 
 # Ensure you set GOOGLE_CLIENT_ID in your environment
-GOOGLE_CLIENT_ID = os.getenv('203630874923-7q190ud15okq9b3m82vjf6sauj96rjrv.apps.googleusercontent.comd')
+GOOGLE_CLIENT_ID = '203630874923-7q190ud15okq9b3m82vjf6sauj96rjrv.apps.googleusercontent.comd'
 if not GOOGLE_CLIENT_ID:
     raise ValueError("Missing GOOGLE_CLIENT_ID environment variable.")
 
