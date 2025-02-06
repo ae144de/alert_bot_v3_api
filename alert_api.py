@@ -5,7 +5,7 @@ import json
 import firebase_admin
 from firebase_admin import credentials, db
 import websockets
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 import uuid
 from flask_cors import CORS
 # from auth import token_required
@@ -18,6 +18,8 @@ from telethon_message_sender import send_alert_notification, send_telegram_messa
 from colorama import init, Fore, Style, Back
 import time
 from flask_socketio import SocketIO, emit
+import google.oauth2.id_token
+import google.auth.transport.requests
 
 load_dotenv()
 
@@ -47,6 +49,10 @@ print(f'NEXTAUTH_SECRET: {NEXTAUTH_SECRET}')
 if not NEXTAUTH_SECRET:
     raise ValueError("Missing NEXTAUTH_SECRET environment variable.")
 
+# Ensure you set GOOGLE_CLIENT_ID in your environment
+GOOGLE_CLIENT_ID = os.getenv('203630874923-7q190ud15okq9b3m82vjf6sauj96rjrv.apps.googleusercontent.comd')
+if not GOOGLE_CLIENT_ID:
+    raise ValueError("Missing GOOGLE_CLIENT_ID environment variable.")
 
 
 # JWT Verification Decorator
@@ -411,6 +417,31 @@ async def subscribe_existing_symbols():
 def test():
     return jsonify({'message': 'Test endpoint'}), 200
 
+
+# New endpoint for Google Sign-In authentication.
+# Clients (web or mobile) should send a POST request with JSON { "token": "<Google_ID_Token>" }.
+@app.route('/api/auth/google', methods=['POST'])
+def google_login():
+    token = request.json.get('token')
+    if not token:
+        return jsonify({'error': 'Missing token'}), 400
+    try:
+        request_adapter = google.auth.transport.requests.Request()
+        id_info = google.oauth2.id_token.verify_oauth2_token(token, request_adapter, GOOGLE_CLIENT_ID)
+        user_email = id_info.get('email')
+        if not user_email:
+            return jsonify({'error': 'User email not found in token'}), 400
+        # Create a JWT token valid for 24 hours.
+        payload = {
+            'email': user_email,
+            'iat': datetime.utcnow(),
+            'exp': datetime.utcnow() + timedelta(hours=24)
+        }
+        access_token = jwt.encode(payload, NEXTAUTH_SECRET, algorithm="HS256")
+        return jsonify({'access_token': access_token}), 200
+    except Exception as e:
+        return jsonify({'error': 'Invalid token', 'details': str(e)}), 400
+    
 @app.route('/api/users/connectUserBot', methods=['POST'])
 @requires_auth
 def connect_user_bot():
